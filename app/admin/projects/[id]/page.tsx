@@ -20,11 +20,18 @@ export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router   = useRouter();
   const { currentUser } = useRoleStore();
-  const [project, setProject]           = useState<Project | null>(null);
+  const [project, setProject]             = useState<Project | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
-  const [postTitle, setPostTitle]       = useState("");
-  const [postContent, setPostContent]   = useState("");
-  const [posting, setPosting]           = useState(false);
+  const [postTitle, setPostTitle]         = useState("");
+  const [postContent, setPostContent]     = useState("");
+  const [posting, setPosting]             = useState(false);
+
+  // Milestone add form
+  const [msTitle, setMsTitle]       = useState("");
+  const [msDueDate, setMsDueDate]   = useState("");
+  const [msDesc, setMsDesc]         = useState("");
+  const [showMsForm, setShowMsForm] = useState(false);
+  const [addingMs, setAddingMs]     = useState(false);
 
   const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
 
@@ -91,6 +98,26 @@ export default function AdminProjectDetailPage() {
     if (!confirm("Delete this project? This cannot be undone.")) return;
     await fetch(`/api/projects/${id}`, { method: "DELETE", headers });
     router.push("/admin/projects");
+  }
+
+  async function addMilestone(e: React.FormEvent) {
+    e.preventDefault();
+    if (!msTitle.trim() || !msDueDate) return;
+    setAddingMs(true);
+    const res = await fetch(`/api/projects/${id}/milestones`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ title: msTitle, description: msDesc, dueDate: msDueDate }),
+    });
+    if (res.ok) {
+      const ms = await res.json();
+      setProject((prev) => prev
+        ? { ...prev, milestones: [...((prev as any).milestones ?? []), ms] }
+        : prev
+      );
+      setMsTitle(""); setMsDueDate(""); setMsDesc(""); setShowMsForm(false);
+    }
+    setAddingMs(false);
   }
 
   if (!project) return <div className="text-sm text-slate-400">Loading…</div>;
@@ -248,8 +275,68 @@ export default function AdminProjectDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Milestones</CardTitle></CardHeader>
-            <CardContent><MilestoneTracker milestones={milestones} /></CardContent>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Milestones</CardTitle>
+                <button
+                  onClick={() => setShowMsForm((v) => !v)}
+                  className="text-xs text-aeromine-600 hover:text-aeromine-800 font-medium transition-colors"
+                >
+                  {showMsForm ? "Cancel" : "+ Add"}
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Prominent prompt when no milestones yet */}
+              {milestones.length === 0 && !showMsForm && (
+                <div className="rounded-lg border-2 border-dashed border-slate-200 p-4 text-center">
+                  <p className="text-sm text-slate-500 mb-2">No milestones set yet.</p>
+                  <button
+                    onClick={() => setShowMsForm(true)}
+                    className="text-xs font-semibold text-aeromine-600 hover:text-aeromine-800 transition-colors"
+                  >
+                    + Add first milestone
+                  </button>
+                </div>
+              )}
+
+              {/* Inline add form */}
+              {showMsForm && (
+                <form onSubmit={addMilestone} className="space-y-2 rounded-lg border border-aeromine-200 bg-aeromine-50 p-3">
+                  <input
+                    required
+                    placeholder="Milestone title"
+                    value={msTitle}
+                    onChange={(e) => setMsTitle(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
+                  />
+                  <input
+                    type="date"
+                    required
+                    value={msDueDate}
+                    onChange={(e) => setMsDueDate(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
+                  />
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={msDesc}
+                    onChange={(e) => setMsDesc(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <Button type="submit" size="sm" disabled={addingMs}>
+                      {addingMs ? "Saving…" : "Save Milestone"}
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setShowMsForm(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              <MilestoneTracker milestones={milestones} />
+            </CardContent>
           </Card>
 
           <Card>
