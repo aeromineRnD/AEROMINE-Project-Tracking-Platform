@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, UserPlus } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,24 +14,29 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { useRoleStore } from "@/lib/store/roleStore";
-import { calcOverallProgress, STATUS_LABELS, type Project, type Stage, type ProjectUpdate } from "@/types";
+import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
+  const router   = useRouter();
   const { currentUser } = useRoleStore();
-  const [project, setProject] = useState<Project | null>(null);
-  const [selectedStageId, setSelectedStageId] = useState<string | undefined>();
-  const [postTitle, setPostTitle] = useState("");
-  const [postContent, setPostContent] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [project, setProject]           = useState<Project | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+  const [postTitle, setPostTitle]       = useState("");
+  const [postContent, setPostContent]   = useState("");
+  const [posting, setPosting]           = useState(false);
 
   const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
 
   useEffect(() => {
     fetch(`/api/projects/${id}`, { headers })
       .then((r) => r.json())
-      .then((d) => { setProject(d); setSelectedStageId(d.stages?.[0]?.id); });
+      .then((d: Project) => {
+        setProject(d);
+        // Default to most recent phase
+        const phases = d.phases ?? [];
+        if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
+      });
   }, [id]);
 
   async function updateStageProgress(stageId: string, progress: number) {
@@ -41,7 +46,6 @@ export default function AdminProjectDetailPage() {
       body: JSON.stringify({ stageId, progress }),
     });
 
-    // Update stage locally, then recalculate status from the new stage values
     setProject((prev) => {
       if (!prev) return prev;
       const updatedStages = prev.stages!.map((s) =>
@@ -81,11 +85,12 @@ export default function AdminProjectDetailPage() {
 
   if (!project) return <div className="text-sm text-slate-400">Loading…</div>;
 
-  const stages: Stage[] = project.stages ?? [];
+  const stages: Stage[]         = project.stages ?? [];
+  const phases: Phase[]         = project.phases ?? [];
   const updates: ProjectUpdate[] = (project as any).updates ?? [];
-  const milestones = (project as any).milestones ?? [];
-  const overall = calcOverallProgress(stages);
-  const statusInfo = STATUS_LABELS[project.status];
+  const milestones               = (project as any).milestones ?? [];
+  const overall                  = calcOverallProgress(stages);
+  const statusInfo               = STATUS_LABELS[project.status];
 
   return (
     <div className="space-y-6">
@@ -119,41 +124,52 @@ export default function AdminProjectDetailPage() {
         </div>
       </div>
 
-      {/* 3D Viewer */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle>3D Construction Model</CardTitle>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {stages.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSelectedStageId(s.id)}
-                  className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    selectedStageId === s.id
-                      ? "bg-aeromine-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {s.nameEn}
-                </button>
-              ))}
-            </div>
+      {/* 3D Viewer — uses phase models, same as client view */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3 border-b">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base">3D Construction Model</CardTitle>
+
+            {phases.length > 0 ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-400">View phase:</span>
+                {phases.map((phase) => (
+                  <button
+                    key={phase.id}
+                    onClick={() => setSelectedPhase(phase)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all border ${
+                      selectedPhase?.id === phase.id
+                        ? "bg-aeromine-600 text-white border-aeromine-600 shadow-sm"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
+                    }`}
+                  >
+                    {phase.name}
+                    <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">No drone captures uploaded yet</p>
+            )}
           </div>
+          {selectedPhase && (
+            <p className="text-xs text-slate-400 mt-0.5">
+              Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
+            </p>
+          )}
         </CardHeader>
-        <CardContent>
-          <ModelViewer stages={stages} selectedStageId={selectedStageId} />
+        <CardContent className="p-0">
+          <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Stage Progress */}
+        {/* Stage Progress + sliders */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader><CardTitle>Stage Progress</CardTitle></CardHeader>
             <CardContent>
               <StageProgressChart stages={stages} />
-              {/* Editable sliders */}
               <div className="mt-6 space-y-3 border-t pt-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Update Stage Progress</p>
                 {stages.map((s) => (
@@ -227,11 +243,7 @@ export default function AdminProjectDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Assigned Clients</CardTitle>
-              </div>
-            </CardHeader>
+            <CardHeader><CardTitle>Assigned Clients</CardTitle></CardHeader>
             <CardContent>
               {(project.clients ?? []).length === 0 ? (
                 <p className="text-sm text-slate-400">No clients assigned.</p>
