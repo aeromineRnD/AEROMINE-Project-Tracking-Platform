@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { Bell, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { useRoleStore } from "@/lib/store/roleStore";
@@ -17,7 +17,7 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
   }, [ref, handler]);
 }
 
-const DEMO_NOTIFICATIONS = [
+const INITIAL_NOTIFICATIONS = [
   { id: 1, text: "Foundation milestone achieved on Glyfada Villa", time: "2h ago", unread: true },
   { id: 2, text: "New update posted: Structural frame 90% complete", time: "1d ago", unread: true },
   { id: 3, text: "Plumbing rough-in started — Glyfada Villa", time: "3d ago", unread: false },
@@ -27,24 +27,31 @@ export function Header() {
   const { currentUser, setRole } = useRoleStore();
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
+  const [userOpen,  setUserOpen]  = useState(false);
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef  = useRef<HTMLDivElement>(null);
 
   useClickOutside(notifRef, () => setNotifOpen(false));
   useClickOutside(userRef,  () => setUserOpen(false));
 
-  const isAdmin = currentUser.role === "ADMIN";
+  const isAdmin      = currentUser.role === "ADMIN";
   const settingsHref = isAdmin ? "/admin/settings" : "/client/settings";
+  const unreadCount  = notifications.filter((n) => n.unread).length;
+
+  function markRead(id: number) {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, unread: false } : n));
+  }
+
+  function markAllRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  }
 
   function handleLogout() {
     setUserOpen(false);
-    // In demo mode, "logout" just resets to admin role and goes to dashboard
     setRole("admin");
     router.push("/admin/dashboard");
   }
-
-  const unreadCount = DEMO_NOTIFICATIONS.filter((n) => n.unread).length;
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-white px-6 z-30 relative">
@@ -72,22 +79,40 @@ export function Header() {
             <div className="absolute right-0 top-10 w-80 rounded-xl border bg-white shadow-xl z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                <span className="text-xs text-aeromine-600 cursor-pointer hover:underline">Mark all read</span>
-              </div>
-              <div className="divide-y max-h-72 overflow-y-auto">
-                {DEMO_NOTIFICATIONS.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors ${n.unread ? "bg-aeromine-50/40" : ""}`}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-xs text-aeromine-600 hover:text-aeromine-800 hover:underline transition-colors"
                   >
-                    <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${n.unread ? "bg-aeromine-500" : "bg-transparent"}`} />
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="divide-y max-h-72 overflow-y-auto">
+                {notifications.map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => markRead(n.id)}
+                    className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${
+                      n.unread ? "bg-aeromine-50/50" : ""
+                    }`}
+                  >
+                    <div
+                      className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 transition-colors ${
+                        n.unread ? "bg-aeromine-500" : "bg-slate-200"
+                      }`}
+                    />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-700 leading-snug">{n.text}</p>
+                      <p className={`text-xs leading-snug ${n.unread ? "text-slate-800 font-medium" : "text-slate-500"}`}>
+                        {n.text}
+                      </p>
                       <p className="text-[11px] text-slate-400 mt-0.5">{n.time}</p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
+
               <div className="px-4 py-2.5 border-t text-center">
                 <p className="text-xs text-slate-400">Real notifications available in production</p>
               </div>
@@ -110,7 +135,6 @@ export function Header() {
 
           {userOpen && (
             <div className="absolute right-0 top-10 w-56 rounded-xl border bg-white shadow-xl z-50 overflow-hidden">
-              {/* User info */}
               <div className="px-4 py-3 border-b bg-slate-50">
                 <p className="text-sm font-semibold text-slate-900 truncate">{currentUser.name}</p>
                 <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
@@ -118,8 +142,6 @@ export function Header() {
                   {isAdmin ? "Admin" : "Client"}
                 </span>
               </div>
-
-              {/* Menu items */}
               <div className="py-1">
                 <button
                   onClick={() => { setUserOpen(false); router.push(settingsHref); }}
