@@ -44,3 +44,6 @@ dev.db
 
 # 3D model files — too large for git, store separately or use Git LFS
 /public/models/
+
+# Internal planning docs — local only
+PRODUCTION_TODO.md
