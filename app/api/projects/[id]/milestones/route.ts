@@ -8,6 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const milestones = await prisma.milestone.findMany({
     where: { projectId: params.id },
+    include: { stage: { select: { id: true, nameEn: true } } },
     orderBy: { dueDate: "asc" },
   });
   return NextResponse.json(milestones);
@@ -17,9 +18,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { error } = await requireProjectEdit(req, params.id);
   if (error) return error;
 
-  const { title, description, dueDate } = await req.json();
+  const { title, description, dueDate, stageId } = await req.json();
   const milestone = await prisma.milestone.create({
-    data: { projectId: params.id, title, description, dueDate: new Date(dueDate) },
+    data: {
+      projectId: params.id,
+      title,
+      description,
+      dueDate: new Date(dueDate),
+      stageId: stageId ?? null,
+    },
+    include: { stage: { select: { id: true, nameEn: true } } },
   });
   return NextResponse.json(milestone, { status: 201 });
 }

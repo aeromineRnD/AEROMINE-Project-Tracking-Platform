@@ -75,12 +75,14 @@ export interface ProjectUpdate {
 export interface Milestone {
   id: string;
   projectId: string;
+  stageId?: string | null;
   title: string;
   description?: string | null;
   dueDate: string;
   completed: boolean;
   completedAt?: string | null;
   createdAt: string;
+  stage?: { id: string; nameEn: string } | null;
 }
 
 export function calcOverallProgress(stages: Stage[]): number {

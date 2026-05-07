@@ -30,6 +30,7 @@ export default function AdminProjectDetailPage() {
   const [msTitle, setMsTitle]       = useState("");
   const [msDueDate, setMsDueDate]   = useState("");
   const [msDesc, setMsDesc]         = useState("");
+  const [msStageId, setMsStageId]   = useState("");
   const [showMsForm, setShowMsForm] = useState(false);
   const [addingMs, setAddingMs]     = useState(false);
 
@@ -107,7 +108,7 @@ export default function AdminProjectDetailPage() {
     const res = await fetch(`/api/projects/${id}/milestones`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ title: msTitle, description: msDesc, dueDate: msDueDate }),
+      body: JSON.stringify({ title: msTitle, description: msDesc, dueDate: msDueDate, stageId: msStageId || null }),
     });
     if (res.ok) {
       const ms = await res.json();
@@ -115,7 +116,7 @@ export default function AdminProjectDetailPage() {
         ? { ...prev, milestones: [...((prev as any).milestones ?? []), ms] }
         : prev
       );
-      setMsTitle(""); setMsDueDate(""); setMsDesc(""); setShowMsForm(false);
+      setMsTitle(""); setMsDueDate(""); setMsDesc(""); setMsStageId(""); setShowMsForm(false);
     }
     setAddingMs(false);
   }
@@ -317,6 +318,17 @@ export default function AdminProjectDetailPage() {
                     onChange={(e) => setMsDueDate(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
                   />
+                  {/* Stage link — auto-completes milestone when stage hits 100% */}
+                  <select
+                    value={msStageId}
+                    onChange={(e) => setMsStageId(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
+                  >
+                    <option value="">No stage link (manual or project completion)</option>
+                    {stages.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nameEn}</option>
+                    ))}
+                  </select>
                   <textarea
                     placeholder="Description (optional)"
                     value={msDesc}

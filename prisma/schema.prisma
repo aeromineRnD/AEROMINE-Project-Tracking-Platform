@@ -76,7 +76,8 @@ model Stage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestones Milestone[]
 
   @@index([projectId])
 }
@@ -114,6 +115,7 @@ model Update {
 model Milestone {
   id          String    @id @default(cuid())
   projectId   String
+  stageId     String?   // optional: auto-complete when this stage hits 100%
   title       String
   description String?
   dueDate     DateTime
@@ -122,6 +124,8 @@ model Milestone {
   createdAt   DateTime  @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage   Stage?  @relation(fields: [stageId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
+  @@index([stageId])
 }
