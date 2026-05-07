@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Role values: SUPER_ADMIN | ADMIN | CLIENT
+// ProjectStatus values: IN_PROGRESS | COMPLETED | DELAYED
+// UpdateType values: TEXT | PHOTO | VIDEO | DOCUMENT | MILESTONE
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("CLIENT")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  adminProjects  Project[]       @relation("AdminProjects")
+  clientProjects ProjectClient[]
+  updates        Update[]
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  name         String
+  location     String
+  startDate    DateTime
+  estimatedEnd DateTime
+  status       String   @default("IN_PROGRESS")
+  coverImage   String?
+  description  String?
+  adminId      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  admin      User            @relation("AdminProjects", fields: [adminId], references: [id])
+  stages     Stage[]
+  phases     Phase[]
+  clients    ProjectClient[]
+  updates    Update[]
+  milestones Milestone[]
+}
+
+// A Phase is a drone-capture snapshot of the whole site at a point in time.
+// modelPath  → the .gltf file for this snapshot
+// stageSnapshot → JSON array: [{nameEn, nameEl, progress}] for every stage at capture time
+model Phase {
+  id             String   @id @default(cuid())
+  projectId      String
+  name           String
+  order          Int
+  capturedAt     DateTime
+  overallProgress Int     @default(0)
+  modelPath      String?
+  stageSnapshot  String   // JSON: [{nameEn, nameEl, progress}]
+  createdAt      DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Stage {
+  id        String   @id @default(cuid())
+  projectId String
+  nameEn    String
+  nameEl    String
+  order     Int
+  progress  Int      @default(0)
+  modelPath String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectClient {
+  id        String   @id @default(cuid())
+  projectId String
+  clientId  String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client  User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, clientId])
+  @@index([clientId])
+  @@index([projectId])
+}
+
+model Update {
+  id        String   @id @default(cuid())
+  projectId String
+  authorId  String
+  title     String
+  content   String
+  type      String   @default("TEXT")
+  mediaUrls String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@index([projectId])
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  dueDate     DateTime
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
