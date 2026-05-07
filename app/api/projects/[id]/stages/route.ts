@@ -26,19 +26,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json(stage, { status: 201 });
 }
 
-/** After every stage progress update, auto-set project status:
- *  - All stages 100%  → COMPLETED
- *  - Any stage < 100% → IN_PROGRESS  (even if project was COMPLETED)
+/** After every stage progress update:
+ *  - All stages 100%  → project COMPLETED + all milestones marked done
+ *  - Any stage < 100% → project IN_PROGRESS (milestones stay as-is)
  */
 async function syncProjectStatus(projectId: string) {
   const stages = await prisma.stage.findMany({ where: { projectId } });
   if (!stages.length) return;
 
   const allDone = stages.every((s) => s.progress === 100);
+
   await prisma.project.update({
     where: { id: projectId },
     data: { status: allDone ? "COMPLETED" : "IN_PROGRESS" },
   });
+
+  if (allDone) {
+    const now = new Date();
+    await prisma.milestone.updateMany({
+      where: { projectId, completed: false },
+      data: { completed: true, completedAt: now },
+    });
+  }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {

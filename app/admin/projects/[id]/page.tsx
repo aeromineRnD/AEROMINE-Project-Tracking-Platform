@@ -52,10 +52,20 @@ export default function AdminProjectDetailPage() {
         s.id === stageId ? { ...s, progress } : s
       );
       const allDone = updatedStages.every((s) => s.progress === 100);
+      const now = new Date().toISOString();
+
+      // When project completes, mark all pending milestones as done instantly
+      const updatedMilestones = allDone
+        ? ((prev as any).milestones ?? []).map((m: any) =>
+            m.completed ? m : { ...m, completed: true, completedAt: now }
+          )
+        : (prev as any).milestones;
+
       return {
         ...prev,
         stages: updatedStages,
         status: allDone ? "COMPLETED" : "IN_PROGRESS",
+        milestones: updatedMilestones,
       };
     });
   }
