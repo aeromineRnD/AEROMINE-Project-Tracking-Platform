@@ -88,6 +88,8 @@ Standard Greek residential construction flow:
 - [ ] Custom stages per project (admin defines stage name + order + gltf)
 - [ ] Model versioning: admin can replace/update a stage model over time (drone revisits)
 - [ ] Cloud storage for models (S3 / Cloudflare R2) — not local disk
+  ⚠️  Models currently in public/ are test/mockup files — publicly accessible is acceptable NOW.
+      When real customer models are onboarded this MUST be private (signed URLs, auth required).
 - [ ] Draco compression pipeline for large photogrammetry meshes
 - [ ] LOD fallback for mobile
 - [ ] Coordinate system / scale convention with colleague generating models
