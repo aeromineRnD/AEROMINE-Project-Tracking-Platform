@@ -39,7 +39,6 @@ export default function NewProjectPage() {
     location: "",
     startDate: "",
     estimatedEnd: "",
-    status: "IN_PROGRESS",
     description: "",
   });
 
@@ -127,7 +126,7 @@ export default function NewProjectPage() {
     const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ ...form, coverImage: coverUrl || null }),
+      body: JSON.stringify({ ...form, status: "IN_PROGRESS", coverImage: coverUrl || null }),
     });
 
     if (!res.ok) { setSaving(false); return; }
@@ -190,16 +189,6 @@ export default function NewProjectPage() {
                 />
               </div>
             ))}
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-              <select value={form.status} onChange={set("status")}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500">
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="DELAYED">Delayed</option>
-              </select>
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
