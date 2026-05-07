@@ -26,21 +26,39 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json(stage, { status: 201 });
 }
 
+/** After every stage progress update, auto-set project status:
+ *  - All stages 100%  → COMPLETED
+ *  - Any stage < 100% → IN_PROGRESS  (even if project was COMPLETED)
+ */
+async function syncProjectStatus(projectId: string) {
+  const stages = await prisma.stage.findMany({ where: { projectId } });
+  if (!stages.length) return;
+
+  const allDone = stages.every((s) => s.progress === 100);
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { status: allDone ? "COMPLETED" : "IN_PROGRESS" },
+  });
+}
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireProjectEdit(req, params.id);
   if (error) return error;
 
   const body = await req.json();
-  // body: { stageId, progress } OR { stages: [{ id, progress }] } for bulk
+
+  // Bulk update: { stages: [{ id, progress }] }
   if (body.stages) {
     await Promise.all(
       body.stages.map((s: { id: string; progress: number }) =>
         prisma.stage.update({ where: { id: s.id }, data: { progress: s.progress } })
       )
     );
+    await syncProjectStatus(params.id);
     return NextResponse.json({ success: true });
   }
 
+  // Single update: { stageId, progress, modelPath? }
   const updated = await prisma.stage.update({
     where: { id: body.stageId },
     data: {
@@ -48,5 +66,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       ...(body.modelPath !== undefined && { modelPath: body.modelPath }),
     },
   });
+
+  await syncProjectStatus(params.id);
   return NextResponse.json(updated);
 }

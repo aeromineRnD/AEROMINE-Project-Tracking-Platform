@@ -40,10 +40,20 @@ export default function AdminProjectDetailPage() {
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ stageId, progress }),
     });
-    setProject((prev) => prev ? {
-      ...prev,
-      stages: prev.stages!.map((s) => s.id === stageId ? { ...s, progress } : s),
-    } : prev);
+
+    // Update stage locally, then recalculate status from the new stage values
+    setProject((prev) => {
+      if (!prev) return prev;
+      const updatedStages = prev.stages!.map((s) =>
+        s.id === stageId ? { ...s, progress } : s
+      );
+      const allDone = updatedStages.every((s) => s.progress === 100);
+      return {
+        ...prev,
+        stages: updatedStages,
+        status: allDone ? "COMPLETED" : "IN_PROGRESS",
+      };
+    });
   }
 
   async function postUpdate(e: React.FormEvent) {
