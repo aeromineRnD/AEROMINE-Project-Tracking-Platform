@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard, FolderOpen, Bell, Settings,
   Users, PlusCircle, Building2, LogOut,
@@ -10,32 +11,31 @@ import { cn } from "@/lib/utils";
 import { useRoleStore } from "@/lib/store/roleStore";
 
 const adminNav = [
-  { label: "Dashboard",     href: "/admin/dashboard",   icon: LayoutDashboard },
-  { label: "All Projects",  href: "/admin/projects",    icon: FolderOpen },
-  { label: "Create Project",href: "/admin/projects/new",icon: PlusCircle },
-  { label: "Clients",       href: "/admin/clients",     icon: Users },
-  { label: "Updates",       href: "/admin/updates",     icon: Bell },
-  { label: "Settings",      href: "/admin/settings",    icon: Settings },
+  { label: "Dashboard",      href: "/admin/dashboard",    icon: LayoutDashboard },
+  { label: "All Projects",   href: "/admin/projects",     icon: FolderOpen },
+  { label: "Create Project", href: "/admin/projects/new", icon: PlusCircle },
+  { label: "Clients",        href: "/admin/clients",      icon: Users },
+  { label: "Updates",        href: "/admin/updates",      icon: Bell },
+  { label: "Settings",       href: "/admin/settings",     icon: Settings },
 ];
 
 const clientNav = [
-  { label: "Dashboard",  href: "/client/dashboard", icon: LayoutDashboard },
-  { label: "My Projects",href: "/client/projects",  icon: FolderOpen },
-  { label: "Updates",    href: "/client/updates",   icon: Bell },
-  { label: "Settings",   href: "/client/settings",  icon: Settings },
+  { label: "Dashboard",   href: "/client/dashboard", icon: LayoutDashboard },
+  { label: "My Projects", href: "/client/projects",  icon: FolderOpen },
+  { label: "Updates",     href: "/client/updates",   icon: Bell },
+  { label: "Settings",    href: "/client/settings",  icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router   = useRouter();
-  const { currentUser, setRole } = useRoleStore();
-  const isAdmin  = currentUser.role === "ADMIN";
-  const navItems = isAdmin ? adminNav : clientNav;
+  const { data: session } = useSession();
+  const { viewMode } = useRoleStore();
 
-  function handleLogout() {
-    setRole("admin");
-    router.push("/admin/dashboard");
-  }
+  const role    = session?.user?.role ?? "CLIENT";
+  const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+  // Admins in preview mode see the client nav
+  const navItems = isAdmin && viewMode === "admin" ? adminNav : clientNav;
+  const name    = session?.user?.name ?? "";
 
   return (
     <aside className="flex h-full w-[200px] flex-col bg-sidebar border-r border-sidebar-border">
@@ -74,16 +74,16 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-aeromine-600 text-white text-sm font-semibold flex-shrink-0">
-            {currentUser.name.charAt(0)}
+            {name.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-white">{currentUser.name}</p>
+            <p className="truncate text-xs font-medium text-white">{name}</p>
             <p className="truncate text-[10px] text-slate-400">
               {isAdmin ? "Admin" : "Client"}
             </p>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => signOut({ callbackUrl: "/login" })}
             title="Log out"
             className="flex-shrink-0 text-slate-500 hover:text-red-400 transition-colors"
           >

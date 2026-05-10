@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/apiAuth";
 
-export async function GET(req: NextRequest) {
-  const { error } = requireAdmin(req);
+export async function GET(_req: NextRequest) {
+  const { error } = await requireAdmin();
   if (error) return error;
 
   const clients = await prisma.user.findMany({
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = requireAdmin(req);
+  const { error } = await requireAdmin();
   if (error) return error;
 
   const { name, email } = await req.json();

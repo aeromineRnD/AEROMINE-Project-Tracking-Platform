@@ -2,21 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { ProjectCard } from "@/components/projects/ProjectCard";
-import { useRoleStore } from "@/lib/store/roleStore";
 import type { Project } from "@/types";
 
 export default function ClientProjectsPage() {
-  const { currentUser } = useRoleStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects", {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch("/api/projects")
       .then((r) => r.json())
       .then((d) => { setProjects(d); setLoading(false); });
-  }, [currentUser]);
+  }, []);
 
   return (
     <div className="space-y-6">

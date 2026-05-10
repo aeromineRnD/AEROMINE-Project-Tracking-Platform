@@ -1,26 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { FolderOpen, TrendingUp, CheckCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusDonut } from "@/components/charts/StatusDonut";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import { useRoleStore } from "@/lib/store/roleStore";
 import { calcOverallProgress, type Project, type ProjectUpdate, type ProjectStatus } from "@/types";
 
 export default function ClientDashboardPage() {
-  const { currentUser } = useRoleStore();
+  const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects", {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch("/api/projects")
       .then((r) => r.json())
       .then((d) => { setProjects(d); setLoading(false); });
-  }, [currentUser]);
+  }, []);
 
   const inProgress = projects.filter((p) => p.status === "IN_PROGRESS").length;
   const completed  = projects.filter((p) => p.status === "COMPLETED").length;
@@ -46,10 +44,12 @@ export default function ClientDashboardPage() {
     { label: "Avg Progress",   value: `${avgProgress}%`, icon: Clock,      color: "text-purple-600", bg: "bg-purple-50" },
   ];
 
+  const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Welcome back, {currentUser.name.split(" ")[0]}</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Welcome back, {firstName}</h1>
         <p className="text-sm text-slate-500">Track your construction progress</p>
       </div>
 

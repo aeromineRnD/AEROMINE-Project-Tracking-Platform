@@ -1,17 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditProject, canViewProject } from "@/lib/permissions";
 import type { Role } from "@/types";
 
-/**
- * Reads the demo role header set by the client-side role store.
- * In production this will be replaced by real session auth.
- */
-export function getDemoUser(req: NextRequest): { userId: string; role: Role } | null {
-  const userId = req.headers.get("x-demo-user-id");
-  const role   = req.headers.get("x-demo-role") as Role | null;
-  if (!userId || !role) return null;
-  return { userId, role };
+export async function getSessionUser(): Promise<{ userId: string; role: Role } | null> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+  return { userId: session.user.id, role: session.user.role as Role };
 }
 
 export function unauthorized() {
@@ -23,8 +20,8 @@ export function forbidden() {
 }
 
 /** Assert the caller is an admin (ADMIN or SUPER_ADMIN). */
-export function requireAdmin(req: NextRequest) {
-  const user = getDemoUser(req);
+export async function requireAdmin(_req?: NextRequest) {
+  const user = await getSessionUser();
   if (!user) return { error: unauthorized(), user: null };
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")
     return { error: forbidden(), user: null };
@@ -32,8 +29,8 @@ export function requireAdmin(req: NextRequest) {
 }
 
 /** Assert the caller can VIEW a specific project. */
-export async function requireProjectAccess(req: NextRequest, projectId: string) {
-  const user = getDemoUser(req);
+export async function requireProjectAccess(_req: NextRequest, projectId: string) {
+  const user = await getSessionUser();
   if (!user) return { error: unauthorized(), user: null, project: null };
 
   const project = await prisma.project.findUnique({
@@ -49,8 +46,8 @@ export async function requireProjectAccess(req: NextRequest, projectId: string) 
 }
 
 /** Assert the caller can EDIT a specific project. */
-export async function requireProjectEdit(req: NextRequest, projectId: string) {
-  const user = getDemoUser(req);
+export async function requireProjectEdit(_req: NextRequest, projectId: string) {
+  const user = await getSessionUser();
   if (!user) return { error: unauthorized(), user: null, project: null };
 
   const project = await prisma.project.findUnique({ where: { id: projectId } });

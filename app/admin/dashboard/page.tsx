@@ -6,21 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusDonut } from "@/components/charts/StatusDonut";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import { useRoleStore } from "@/lib/store/roleStore";
 import { calcOverallProgress, type Project, type ProjectUpdate, type ProjectStatus } from "@/types";
 
 export default function AdminDashboardPage() {
-  const { currentUser } = useRoleStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects", {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch("/api/projects")
       .then((r) => r.json())
       .then((data) => { setProjects(data); setLoading(false); });
-  }, [currentUser]);
+  }, []);
 
   const inProgress  = projects.filter((p) => p.status === "IN_PROGRESS").length;
   const completed   = projects.filter((p) => p.status === "COMPLETED").length;

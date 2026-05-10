@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { UserPlus, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRoleStore } from "@/lib/store/roleStore";
 
 interface Client {
   id: string;
@@ -14,27 +13,24 @@ interface Client {
 }
 
 export default function AdminClientsPage() {
-  const { currentUser } = useRoleStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
   const [saving, setSaving] = useState(false);
 
-  const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
-
   useEffect(() => {
-    fetch("/api/clients", { headers })
+    fetch("/api/clients")
       .then((r) => r.json())
       .then((d) => { setClients(d); setLoading(false); });
-  }, [currentUser]);
+  }, []);
 
   async function addClient(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     const res = await fetch("/api/clients", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     if (res.ok) {

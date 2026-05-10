@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -30,7 +31,10 @@ async function createStages(projectId: string, progressValues: number[]) {
 }
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("Seeding database...");
+
+  const adminHash  = await bcrypt.hash("admin", 10);
+  const clientHash = await bcrypt.hash("user", 10);
 
   // Wipe in dependency order
   await prisma.milestone.deleteMany();
@@ -49,6 +53,7 @@ async function main() {
       email: "stavros@alphaconstruct.gr",
       name: "Stavros Papadopoulos",
       role: "ADMIN",
+      password: adminHash,
     },
   });
 
@@ -58,6 +63,7 @@ async function main() {
       email: "maria@betabuild.gr",
       name: "Maria Georgiou",
       role: "ADMIN",
+      password: adminHash,
     },
   });
 
@@ -67,6 +73,7 @@ async function main() {
       email: "nikos.papadimitriou@gmail.com",
       name: "Nikos Papadimitriou",
       role: "CLIENT",
+      password: clientHash,
     },
   });
 
@@ -76,6 +83,7 @@ async function main() {
       email: "eleni.papadimitriou@gmail.com",
       name: "Eleni Papadimitriou",
       role: "CLIENT",
+      password: clientHash,
     },
   });
 
@@ -85,6 +93,7 @@ async function main() {
       email: "george.katsaros@outlook.com",
       name: "George Katsaros",
       role: "CLIENT",
+      password: clientHash,
     },
   });
 
@@ -288,7 +297,7 @@ async function main() {
     ],
   });
 
-  // Phases for Kifisia Residence — Example_1 models
+  // Phases for Kifisia Residence
   await prisma.phase.createMany({
     data: [
       {
@@ -297,7 +306,7 @@ async function main() {
         order: 1,
         capturedAt: new Date("2024-11-20"),
         overallProgress: 20,
-        modelPath: "/models/Example_1_phase_1/scene.gltf",
+        modelPath: "/models/Phase_1/1st%20Model.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 20  },
@@ -320,7 +329,7 @@ async function main() {
         order: 2,
         capturedAt: new Date("2025-03-08"),
         overallProgress: 80,
-        modelPath: "/models/Example_1_phase_2/scene.gltf",
+        modelPath: "/models/Phase_2/aeromine_no_doors.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 100 },
@@ -422,14 +431,14 @@ async function main() {
 
   console.log("✅ Project 3 — Vouliagmeni Penthouse");
 
-  console.log("\n🎉 Seed complete!");
+  console.log("\n Seed complete!");
   console.log("─────────────────────────────────────────");
-  console.log("Demo accounts (no passwords — role-switch button used in demo):");
-  console.log("  Admin 1  : stavros@alphaconstruct.gr   (Glyfada Villa, Kifisia Residence)");
-  console.log("  Admin 2  : maria@betabuild.gr          (Vouliagmeni Penthouse)");
-  console.log("  Client 1 : nikos.papadimitriou@gmail.com  (Glyfada Villa + Vouliagmeni)");
-  console.log("  Client 2 : eleni.papadimitriou@gmail.com  (Glyfada Villa — same project as Nikos)");
-  console.log("  Client 3 : george.katsaros@outlook.com    (Kifisia Residence)");
+  console.log("Demo credentials:");
+  console.log("  Admin 1  : stavros@alphaconstruct.gr  / admin");
+  console.log("  Admin 2  : maria@betabuild.gr         / admin");
+  console.log("  Client 1 : nikos.papadimitriou@gmail.com   / user");
+  console.log("  Client 2 : eleni.papadimitriou@gmail.com   / user");
+  console.log("  Client 3 : george.katsaros@outlook.com     / user");
   console.log("─────────────────────────────────────────");
 }
 

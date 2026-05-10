@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { getDemoUser, unauthorized } from "@/lib/apiAuth";
+import { getSessionUser, unauthorized } from "@/lib/apiAuth";
 
 const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf", "model/gltf+json", "model/gltf-binary"];
 
 export async function POST(req: NextRequest) {
-  const user = getDemoUser(req);
+  const user = await getSessionUser();
   if (!user) return unauthorized();
 
   const formData = await req.formData();

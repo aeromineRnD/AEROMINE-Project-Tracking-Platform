@@ -11,7 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
-import { useRoleStore } from "@/lib/store/roleStore";
 import {
   STATUS_LABELS, stageColor,
   type Project, type Phase, type PhaseStageSnapshot, type ProjectUpdate,
@@ -19,14 +18,11 @@ import {
 
 export default function ClientProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { currentUser } = useRoleStore();
   const [project, setProject] = useState<Project | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}`, {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch(`/api/projects/${id}`)
       .then((r) => r.json())
       .then((d: Project) => {
         setProject(d);
@@ -34,7 +30,7 @@ export default function ClientProjectDetailPage() {
         // Default: most recent phase (last by order)
         if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
       });
-  }, [id, currentUser]);
+  }, [id]);
 
   if (!project) {
     return (

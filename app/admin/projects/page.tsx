@@ -5,23 +5,19 @@ import Link from "next/link";
 import { PlusCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/projects/ProjectCard";
-import { useRoleStore } from "@/lib/store/roleStore";
 import type { Project, ProjectStatus } from "@/types";
 
 export default function AdminProjectsPage() {
-  const { currentUser } = useRoleStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects", {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch("/api/projects")
       .then((r) => r.json())
       .then((d) => { setProjects(d); setLoading(false); });
-  }, [currentUser]);
+  }, []);
 
   const filtered = projects.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||

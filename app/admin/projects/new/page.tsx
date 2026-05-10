@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRoleStore } from "@/lib/store/roleStore";
 
 interface ClientOption {
   id: string;
@@ -18,7 +17,6 @@ interface ClientOption {
 
 export default function NewProjectPage() {
   const router = useRouter();
-  const { currentUser } = useRoleStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving]           = useState(false);
@@ -42,10 +40,8 @@ export default function NewProjectPage() {
     description: "",
   });
 
-  const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
-
   useEffect(() => {
-    fetch("/api/clients", { headers })
+    fetch("/api/clients")
       .then((r) => r.json())
       .then((data: ClientOption[]) => setAllClients(data))
       .catch(() => {});
@@ -105,7 +101,6 @@ export default function NewProjectPage() {
 
     const res = await fetch("/api/uploads", {
       method: "POST",
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
       body: fd,
     });
 
@@ -125,7 +120,7 @@ export default function NewProjectPage() {
     // 1. Create the project
     const res = await fetch("/api/projects", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...form, status: "IN_PROGRESS", coverImage: coverUrl || null }),
     });
 
@@ -140,7 +135,7 @@ export default function NewProjectPage() {
         if (client.isNew) {
           const created = await fetch("/api/clients", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...headers },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: client.name, email: client.email }),
           }).then((r) => r.json());
           clientId = created.id;
@@ -148,7 +143,7 @@ export default function NewProjectPage() {
 
         await fetch(`/api/projects/${project.id}/clients`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...headers },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ clientId }),
         });
       })

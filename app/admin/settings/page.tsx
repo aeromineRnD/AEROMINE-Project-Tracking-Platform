@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRoleStore } from "@/lib/store/roleStore";
 
 export default function AdminSettingsPage() {
-  const { currentUser } = useRoleStore();
+  const { data: session } = useSession();
   const [lang, setLang] = useState<"en" | "el">("en");
+
+  const name  = session?.user?.name  ?? "";
+  const email = session?.user?.email ?? "";
 
   return (
     <div className="max-w-xl space-y-6">
@@ -18,11 +21,11 @@ export default function AdminSettingsPage() {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-aeromine-600 text-white text-lg font-bold">
-              {currentUser.name.charAt(0)}
+              {name.charAt(0)}
             </div>
             <div>
-              <p className="font-semibold text-slate-900">{currentUser.name}</p>
-              <p className="text-sm text-slate-500">{currentUser.email}</p>
+              <p className="font-semibold text-slate-900">{name}</p>
+              <p className="text-sm text-slate-500">{email}</p>
               <span className="mt-0.5 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 uppercase tracking-wide">
                 Admin
               </span>
@@ -64,7 +67,7 @@ export default function AdminSettingsPage() {
                     : "border-slate-200 bg-white text-slate-600 hover:border-aeromine-300"
                 }`}
               >
-                {l === "en" ? "🇬🇧 English" : "🇬🇷 Ελληνικά"}
+                {l === "en" ? "English" : "Ελληνικά"}
               </button>
             ))}
           </div>

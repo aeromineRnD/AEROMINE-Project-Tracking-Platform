@@ -6,20 +6,16 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRoleStore } from "@/lib/store/roleStore";
 import type { Project } from "@/types";
 
 export default function EditProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { currentUser } = useRoleStore();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", location: "", startDate: "", estimatedEnd: "", status: "IN_PROGRESS", coverImage: "", description: "" });
 
-  const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
-
   useEffect(() => {
-    fetch(`/api/projects/${id}`, { headers })
+    fetch(`/api/projects/${id}`)
       .then((r) => r.json())
       .then((p: Project) => setForm({
         name: p.name,
@@ -40,7 +36,7 @@ export default function EditProjectPage() {
     setSaving(true);
     await fetch(`/api/projects/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     router.push(`/admin/projects/${id}`);

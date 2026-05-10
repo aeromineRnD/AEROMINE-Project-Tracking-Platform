@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { RoleSwitcher } from "./RoleSwitcher";
-import { useRoleStore } from "@/lib/store/roleStore";
 
 function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
   useEffect(() => {
@@ -24,7 +24,7 @@ const INITIAL_NOTIFICATIONS = [
 ];
 
 export function Header() {
-  const { currentUser, setRole } = useRoleStore();
+  const { data: session } = useSession();
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen,  setUserOpen]  = useState(false);
@@ -35,7 +35,10 @@ export function Header() {
   useClickOutside(notifRef, () => setNotifOpen(false));
   useClickOutside(userRef,  () => setUserOpen(false));
 
-  const isAdmin      = currentUser.role === "ADMIN";
+  const role         = session?.user?.role ?? "CLIENT";
+  const isAdmin      = role === "ADMIN" || role === "SUPER_ADMIN";
+  const name         = session?.user?.name  ?? "";
+  const email        = session?.user?.email ?? "";
   const settingsHref = isAdmin ? "/admin/settings" : "/client/settings";
   const unreadCount  = notifications.filter((n) => n.unread).length;
 
@@ -47,10 +50,9 @@ export function Header() {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     setUserOpen(false);
-    setRole("admin");
-    router.push("/admin/dashboard");
+    await signOut({ callbackUrl: "/login" });
   }
 
   return (
@@ -58,7 +60,7 @@ export function Header() {
       <div />
 
       <div className="flex items-center gap-3">
-        <RoleSwitcher />
+        {isAdmin && <RoleSwitcher />}
 
         {/* ── Notifications ─────────────────────────────────────── */}
         <div ref={notifRef} className="relative">
@@ -128,7 +130,7 @@ export function Header() {
             aria-label="User menu"
           >
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-aeromine-600 text-white text-sm font-semibold">
-              {currentUser.name.charAt(0)}
+              {name.charAt(0)}
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           </button>
@@ -136,8 +138,8 @@ export function Header() {
           {userOpen && (
             <div className="absolute right-0 top-10 w-56 rounded-xl border bg-white shadow-xl z-50 overflow-hidden">
               <div className="px-4 py-3 border-b bg-slate-50">
-                <p className="text-sm font-semibold text-slate-900 truncate">{currentUser.name}</p>
-                <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
+                <p className="text-sm font-semibold text-slate-900 truncate">{name}</p>
+                <p className="text-xs text-slate-500 truncate">{email}</p>
                 <span className="mt-1 inline-block rounded-full bg-aeromine-100 px-2 py-0.5 text-[10px] font-semibold text-aeromine-700 uppercase tracking-wide">
                   {isAdmin ? "Admin" : "Client"}
                 </span>

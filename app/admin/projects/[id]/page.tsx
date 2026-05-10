@@ -13,13 +13,11 @@ import { StageProgressChart } from "@/components/charts/StageProgressChart";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
-import { useRoleStore } from "@/lib/store/roleStore";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router   = useRouter();
-  const { currentUser } = useRoleStore();
   const [project, setProject]             = useState<Project | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [postTitle, setPostTitle]         = useState("");
@@ -34,10 +32,8 @@ export default function AdminProjectDetailPage() {
   const [showMsForm, setShowMsForm] = useState(false);
   const [addingMs, setAddingMs]     = useState(false);
 
-  const headers = { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role };
-
   useEffect(() => {
-    fetch(`/api/projects/${id}`, { headers })
+    fetch(`/api/projects/${id}`)
       .then((r) => r.json())
       .then((d: Project) => {
         setProject(d);
@@ -50,7 +46,7 @@ export default function AdminProjectDetailPage() {
   async function updateStageProgress(stageId: string, progress: number) {
     await fetch(`/api/projects/${id}/stages`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stageId, progress }),
     });
 
@@ -84,7 +80,7 @@ export default function AdminProjectDetailPage() {
     setPosting(true);
     const res = await fetch(`/api/projects/${id}/updates`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: postTitle, content: postContent, type: "TEXT" }),
     });
     if (res.ok) {
@@ -97,7 +93,7 @@ export default function AdminProjectDetailPage() {
 
   async function deleteProject() {
     if (!confirm("Delete this project? This cannot be undone.")) return;
-    await fetch(`/api/projects/${id}`, { method: "DELETE", headers });
+    await fetch(`/api/projects/${id}`, { method: "DELETE" });
     router.push("/admin/projects");
   }
 
@@ -107,7 +103,7 @@ export default function AdminProjectDetailPage() {
     setAddingMs(true);
     const res = await fetch(`/api/projects/${id}/milestones`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: msTitle, description: msDesc, dueDate: msDueDate, stageId: msStageId || null }),
     });
     if (res.ok) {

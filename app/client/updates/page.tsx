@@ -3,18 +3,14 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import { useRoleStore } from "@/lib/store/roleStore";
 import type { Project, ProjectUpdate } from "@/types";
 
 export default function ClientUpdatesPage() {
-  const { currentUser } = useRoleStore();
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects", {
-      headers: { "x-demo-user-id": currentUser.id, "x-demo-role": currentUser.role },
-    })
+    fetch("/api/projects")
       .then((r) => r.json())
       .then((projects: Project[]) => {
         const all = projects
@@ -25,7 +21,7 @@ export default function ClientUpdatesPage() {
         setUpdates(all);
         setLoading(false);
       });
-  }, [currentUser]);
+  }, []);
 
   return (
     <div className="space-y-6">

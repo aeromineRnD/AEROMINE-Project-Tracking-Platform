@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getDemoUser, unauthorized, forbidden } from "@/lib/apiAuth";
+import { getSessionUser, unauthorized, forbidden } from "@/lib/apiAuth";
 
 const PRESET_STAGES = [
   { nameEn: "Foundation",           nameEl: "Θεμελίωση",            order: 1  },
@@ -18,8 +18,8 @@ const PRESET_STAGES = [
   { nameEn: "Final Inspection",     nameEl: "Τελική Επιθεώρηση",    order: 13 },
 ];
 
-export async function GET(req: NextRequest) {
-  const user = getDemoUser(req);
+export async function GET(_req: NextRequest) {
+  const user = await getSessionUser();
   if (!user) return unauthorized();
 
   if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = getDemoUser(req);
+  const user = await getSessionUser();
   if (!user) return unauthorized();
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") return forbidden();
 
