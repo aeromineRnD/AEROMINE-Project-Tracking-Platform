@@ -72,6 +72,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   // Bulk update: { stages: [{ id, progress }] }
   if (body.stages) {
+    const stageIds: string[] = body.stages.map((s: { id: string }) => s.id);
+    // Verify all stage IDs belong to this project
+    const owned = await prisma.stage.findMany({
+      where: { id: { in: stageIds }, projectId: params.id },
+      select: { id: true },
+    });
+    if (owned.length !== stageIds.length)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     await Promise.all(
       body.stages.map((s: { id: string; progress: number }) =>
         prisma.stage.update({ where: { id: s.id }, data: { progress: s.progress } })
@@ -82,6 +91,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   // Single update: { stageId, progress, modelPath? }
+  const stageOwned = await prisma.stage.findFirst({
+    where: { id: body.stageId, projectId: params.id },
+  });
+  if (!stageOwned) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const updated = await prisma.stage.update({
     where: { id: body.stageId },
     data: {

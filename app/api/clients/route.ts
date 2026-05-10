@@ -1,18 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/apiAuth";
+import { requireAdmin, getSessionUser } from "@/lib/apiAuth";
 
 export async function GET(_req: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const clients = await prisma.user.findMany({
-    where: { role: "CLIENT" },
-    select: { id: true, name: true, email: true, createdAt: true,
-      clientProjects: { include: { project: { select: { id: true, name: true } } } },
-    },
-    orderBy: { name: "asc" },
-  });
+  const user = (await getSessionUser())!;
+
+  // SUPER_ADMIN sees all clients; ADMIN sees only clients on their own projects
+  const clients = user.role === "SUPER_ADMIN"
+    ? await prisma.user.findMany({
+        where: { role: "CLIENT" },
+        select: { id: true, name: true, email: true, createdAt: true,
+          clientProjects: { include: { project: { select: { id: true, name: true } } } },
+        },
+        orderBy: { name: "asc" },
+      })
+    : await prisma.user.findMany({
+        where: {
+          role: "CLIENT",
+          clientProjects: {
+            some: { project: { adminId: user.userId } },
+          },
+        },
+        select: { id: true, name: true, email: true, createdAt: true,
+          clientProjects: {
+            where: { project: { adminId: user.userId } },
+            include: { project: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { name: "asc" },
+      });
+
   return NextResponse.json(clients);
 }
 
