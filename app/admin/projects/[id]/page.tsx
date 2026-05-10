@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,12 @@ export default function AdminProjectDetailPage() {
   const [msStageId, setMsStageId]   = useState("");
   const [showMsForm, setShowMsForm] = useState(false);
   const [addingMs, setAddingMs]     = useState(false);
+
+  // Add 3D phase form
+  const [phaseName, setPhaseName]         = useState("Phase 1");
+  const [phaseCapturedAt, setPhaseCapturedAt] = useState(new Date().toISOString().split("T")[0]);
+  const [phaseModelPath, setPhaseModelPath]   = useState("");
+  const [addingPhase, setAddingPhase]         = useState(false);
 
   // Hydrate local state from SWR on first load
   useEffect(() => {
@@ -117,6 +123,45 @@ export default function AdminProjectDetailPage() {
     setAddingMs(false);
   }
 
+  async function addPhase(e: React.FormEvent) {
+    e.preventDefault();
+    if (!phaseName.trim() || !phaseCapturedAt) return;
+    setAddingPhase(true);
+
+    const currentStages = project?.stages ?? [];
+    const overallProgress = calcOverallProgress(currentStages);
+    const stageSnapshot = currentStages.map((s) => ({
+      nameEn: s.nameEn, nameEl: s.nameEl, progress: s.progress,
+    }));
+
+    const res = await fetch(`/api/projects/${id}/phases`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: phaseName.trim(),
+        order: ((project?.phases ?? []).length) + 1,
+        capturedAt: phaseCapturedAt,
+        overallProgress,
+        modelPath: phaseModelPath.trim() || null,
+        stageSnapshot,
+      }),
+    });
+
+    if (res.ok) {
+      const newPhase = await res.json();
+      setProject((prev) => prev
+        ? { ...prev, phases: [...(prev.phases ?? []), newPhase] }
+        : prev
+      );
+      setSelectedPhase(newPhase);
+      mutate();
+      setPhaseName(`Phase ${((project?.phases ?? []).length) + 2}`);
+      setPhaseCapturedAt(new Date().toISOString().split("T")[0]);
+      setPhaseModelPath("");
+    }
+    setAddingPhase(false);
+  }
+
   if (isLoading || !project) return <div className="text-sm text-slate-400">Loading…</div>;
 
   const stages: Stage[]         = project.stages ?? [];
@@ -158,13 +203,64 @@ export default function AdminProjectDetailPage() {
         </div>
       </div>
 
-      {/* 3D Viewer — uses phase models, same as client view */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-3 border-b">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <CardTitle className="text-base">3D Construction Model</CardTitle>
-
-            {phases.length > 0 ? (
+      {/* 3D Viewer — or Add Phase form if no phases yet */}
+      {phases.length === 0 ? (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center gap-2">
+              <Box className="h-5 w-5 text-aeromine-400" />
+              <CardTitle className="text-base">3D Construction Model</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="py-6">
+            <p className="text-sm text-slate-500 mb-5">
+              No drone capture added yet. Once your colleague sends you the <code className="text-xs bg-slate-100 px-1 rounded">.gltf</code> files, add the phase below.
+            </p>
+            <form onSubmit={addPhase} className="space-y-3 max-w-md">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Phase name</label>
+                  <input
+                    value={phaseName}
+                    onChange={(e) => setPhaseName(e.target.value)}
+                    required
+                    placeholder="Phase 1"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Capture date</label>
+                  <input
+                    type="date"
+                    value={phaseCapturedAt}
+                    onChange={(e) => setPhaseCapturedAt(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Model path <span className="text-slate-400 font-normal">(e.g. /models/Phase_1/scene.gltf)</span>
+                </label>
+                <input
+                  value={phaseModelPath}
+                  onChange={(e) => setPhaseModelPath(e.target.value)}
+                  placeholder="/models/Phase_1/scene.gltf"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
+                />
+              </div>
+              <Button type="submit" size="sm" disabled={addingPhase}>
+                {addingPhase ? "Adding…" : "Add Phase"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <CardTitle className="text-base">3D Construction Model</CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-slate-400">View phase:</span>
                 {phases.map((phase) => (
@@ -181,21 +277,61 @@ export default function AdminProjectDetailPage() {
                     <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
                   </button>
                 ))}
+                <button
+                  onClick={() => { setPhaseName(`Phase ${phases.length + 1}`); /* scroll to form */ }}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-aeromine-400 hover:text-aeromine-600 transition-all"
+                >
+                  + Add phase
+                </button>
               </div>
-            ) : (
-              <p className="text-xs text-slate-400">No drone captures uploaded yet</p>
+            </div>
+            {selectedPhase && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
+              </p>
             )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
+          </CardContent>
+          {/* Add another phase form */}
+          <div className="border-t px-5 py-4 bg-slate-50">
+            <form onSubmit={addPhase} className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">New phase name</label>
+                <input
+                  value={phaseName}
+                  onChange={(e) => setPhaseName(e.target.value)}
+                  required
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 w-32"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Capture date</label>
+                <input
+                  type="date"
+                  value={phaseCapturedAt}
+                  onChange={(e) => setPhaseCapturedAt(e.target.value)}
+                  required
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-slate-600 mb-1">Model path</label>
+                <input
+                  value={phaseModelPath}
+                  onChange={(e) => setPhaseModelPath(e.target.value)}
+                  placeholder="/models/Phase_2/scene.gltf"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
+                />
+              </div>
+              <Button type="submit" size="sm" disabled={addingPhase}>
+                {addingPhase ? "Adding…" : "Add Phase"}
+              </Button>
+            </form>
           </div>
-          {selectedPhase && (
-            <p className="text-xs text-slate-400 mt-0.5">
-              Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
-        </CardContent>
-      </Card>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Stage Progress + sliders */}

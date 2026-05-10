@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, User } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ export default function ClientProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { project, isLoading } = useProject(id);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+  const [requested3D, setRequested3D]     = useState(false);
+  const [requesting3D, setRequesting3D]   = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -28,6 +30,21 @@ export default function ClientProjectDetailPage() {
       if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
     }
   }, [project?.id]);
+
+  async function request3D() {
+    setRequesting3D(true);
+    await fetch(`/api/projects/${id}/updates`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "3D Walkthrough Requested",
+        content: "The client has requested a 3D walkthrough of the construction site.",
+        type: "TEXT",
+      }),
+    });
+    setRequested3D(true);
+    setRequesting3D(false);
+  }
 
   if (isLoading || !project) {
     return (
@@ -107,14 +124,53 @@ export default function ClientProjectDetailPage() {
         {/* ── Main column ─────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-5">
 
-          {/* 3D Viewer card */}
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-3 border-b">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <CardTitle className="text-base">3D Construction Model</CardTitle>
-
-                {/* Phase selector buttons */}
-                {phases.length > 0 && (
+          {/* 3D Viewer card — or request card if no phases yet */}
+          {phases.length === 0 ? (
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex items-center gap-2">
+                  <Box className="h-5 w-5 text-aeromine-400" />
+                  <CardTitle className="text-base">3D Construction Model</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="py-8 flex flex-col items-center text-center gap-4">
+                {requested3D ? (
+                  <>
+                    <CheckCircle className="h-10 w-10 text-green-500" />
+                    <div>
+                      <p className="font-semibold text-slate-800">Request sent</p>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Your project manager has been notified. The 3D model will appear here once it's ready.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-14 w-14 rounded-full bg-aeromine-50 flex items-center justify-center">
+                      <Box className="h-7 w-7 text-aeromine-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800">No 3D model yet</p>
+                      <p className="text-sm text-slate-500 mt-1 max-w-xs">
+                        A drone walkthrough of your site can be added on request. Would you like one?
+                      </p>
+                    </div>
+                    <button
+                      onClick={request3D}
+                      disabled={requesting3D}
+                      className="rounded-lg bg-aeromine-600 hover:bg-aeromine-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-medium transition-colors"
+                    >
+                      {requesting3D ? "Sending request…" : "Request 3D Walkthrough"}
+                    </button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <CardTitle className="text-base">3D Construction Model</CardTitle>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-slate-400">View phase:</span>
                     {phases.map((phase) => (
@@ -128,30 +184,28 @@ export default function ClientProjectDetailPage() {
                         }`}
                       >
                         {phase.name}
-                        <span className="ml-1.5 font-normal opacity-75">
-                          {phase.overallProgress}%
-                        </span>
+                        <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
                       </button>
                     ))}
                   </div>
+                </div>
+                {selectedPhase && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
+                  </p>
                 )}
-              </div>
-              {selectedPhase && (
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="p-0">
-              <ModelViewer
-                stages={(project.stages ?? []).map((s, i) => ({
-                  ...s,
-                  progress: activeStages[i]?.progress ?? s.progress,
-                }))}
-                modelUrl={selectedPhase?.modelPath ?? null}
-              />
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ModelViewer
+                  stages={(project.stages ?? []).map((s, i) => ({
+                    ...s,
+                    progress: activeStages[i]?.progress ?? s.progress,
+                  }))}
+                  modelUrl={selectedPhase?.modelPath ?? null}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Stage Progress bars */}
           <Card>
