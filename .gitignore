@@ -45,6 +45,9 @@ dev.db
 # 3D model files — too large for git, store separately or use Git LFS
 /public/models/
 
+# User-uploaded files — local only, move to S3/R2 in production
+/public/uploads/
+
 # Internal planning docs — local only
 PRODUCTION_TODO.md
 DEMO_CREDENTIALS.md
