@@ -42,8 +42,12 @@ prisma/dev.db
 prisma/dev.db-journal
 dev.db
 
-# 3D model files — too large for git, store separately or use Git LFS
-/public/models/
+# Demo/example 3D models — too large for git (60-83 MB each)
+/public/models/Example_1_phase_1/
+/public/models/Example_1_phase_2/
+/public/models/Example_2_phase_1/
+/public/models/Example_2_phase_2/
+# Phase_1 (48 KB) and Phase_2 (18 MB) are committed — real Aeromine models
 
 # User-uploaded files — local only, move to S3/R2 in production
 /public/uploads/

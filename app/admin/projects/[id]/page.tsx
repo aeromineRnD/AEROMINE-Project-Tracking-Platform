@@ -213,9 +213,6 @@ export default function AdminProjectDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="py-6">
-            <p className="text-sm text-slate-500 mb-5">
-              No drone capture added yet. Once your colleague sends you the <code className="text-xs bg-slate-100 px-1 rounded">.gltf</code> files, add the phase below.
-            </p>
             <form onSubmit={addPhase} className="space-y-3 max-w-md">
               <div className="grid grid-cols-2 gap-3">
                 <div>

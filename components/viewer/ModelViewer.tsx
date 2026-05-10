@@ -1,10 +1,22 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, Component, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, useGLTF } from "@react-three/drei";
 import type { Stage } from "@/types";
 import { stageColor } from "@/types";
+
+// ── Error boundary — catches model load failures, shows placeholder ──────────
+class ModelErrorBoundary extends Component<
+  { fallback: ReactNode; children: ReactNode },
+  { error: boolean }
+> {
+  state = { error: false };
+  static getDerivedStateFromError() { return { error: true }; }
+  render() {
+    return this.state.error ? this.props.fallback : this.props.children;
+  }
+}
 
 function GltfModel({ url }: { url: string }) {
   const { scene } = useGLTF(url);
@@ -38,24 +50,21 @@ function PlaceholderBuilding({ stages }: { stages: Stage[] }) {
 
 interface Props {
   stages: Stage[];
-  /** Direct URL to a .gltf file — if provided, loads it instead of the placeholder. */
   modelUrl?: string | null;
-  /** Legacy: stage-based model selection (used by admin detail page). */
   selectedStageId?: string;
 }
 
 export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
-  // Support both usage patterns:
-  // 1. Client page: passes modelUrl directly from selected Phase
-  // 2. Admin page: passes selectedStageId → derives URL from that stage
   const resolvedUrl =
     modelUrl !== undefined
       ? modelUrl
       : (stages.find((s) => s.id === selectedStageId)?.modelPath ?? null);
 
+  const placeholder = <PlaceholderBuilding stages={stages} />;
+
   return (
     <div className="relative w-full h-[420px] bg-[#0f172a]">
-      {/* Colour legend — top-left */}
+      {/* Colour legend */}
       <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/60 px-3 py-2 text-xs text-white space-y-1 pointer-events-none">
         {[
           { label: "Completed",   color: "#22c55e" },
@@ -69,7 +78,7 @@ export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
         ))}
       </div>
 
-      {/* Stage progress overlay — bottom-left */}
+      {/* Stage progress overlay */}
       {stages.length > 0 && (
         <div className="absolute bottom-10 left-3 z-10 rounded-lg bg-black/60 px-3 py-2 text-xs text-white space-y-1 pointer-events-none">
           {stages.slice(0, 5).map((s) => (
@@ -102,9 +111,11 @@ export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
 
         <Suspense fallback={null}>
           {resolvedUrl ? (
-            <GltfModel url={resolvedUrl} />
+            <ModelErrorBoundary fallback={placeholder}>
+              <GltfModel url={resolvedUrl} />
+            </ModelErrorBoundary>
           ) : (
-            <PlaceholderBuilding stages={stages} />
+            placeholder
           )}
         </Suspense>
 
