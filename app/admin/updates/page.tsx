@@ -1,27 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import type { Project, ProjectUpdate } from "@/types";
+import { useProjects } from "@/lib/hooks/useProjects";
+import type { ProjectUpdate } from "@/types";
 
 export default function AdminUpdatesPage() {
-  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/projects")
-      .then((r) => r.json())
-      .then((projects: Project[]) => {
-        const allUpdates = projects
-          .flatMap((p) => (p as any).updates ?? [])
-          .sort((a: ProjectUpdate, b: ProjectUpdate) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        setUpdates(allUpdates);
-        setLoading(false);
-      });
-  }, []);
+  const { projects, isLoading: loading } = useProjects();
+  const updates = useMemo(() =>
+    projects
+      .flatMap((p) => (p as any).updates ?? [])
+      .sort((a: ProjectUpdate, b: ProjectUpdate) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [projects]
+  );
 
   return (
     <div className="space-y-6">

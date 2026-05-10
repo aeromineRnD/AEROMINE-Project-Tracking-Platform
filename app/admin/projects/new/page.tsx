@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { mutate } from "swr";
 import { ArrowLeft, Upload, X, Search, UserPlus, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -149,6 +150,7 @@ export default function NewProjectPage() {
       })
     );
 
+    await mutate("/api/projects"); // invalidate projects list cache
     router.push(`/admin/projects/${project.id}`);
   }
 

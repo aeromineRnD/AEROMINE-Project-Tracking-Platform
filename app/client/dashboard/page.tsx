@@ -1,27 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { FolderOpen, TrendingUp, CheckCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusDonut } from "@/components/charts/StatusDonut";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusDonutDynamic as StatusDonut } from "@/components/charts/StatusDonutDynamic";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import { calcOverallProgress, type Project, type ProjectUpdate, type ProjectStatus } from "@/types";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { calcOverallProgress, type ProjectUpdate, type ProjectStatus } from "@/types";
+
+const statIcons  = [FolderOpen, TrendingUp, CheckCircle, Clock];
+const statBgs    = ["bg-blue-50", "bg-amber-50", "bg-green-50", "bg-purple-50"];
+const statColors = ["text-blue-600", "text-amber-600", "text-green-600", "text-purple-600"];
 
 export default function ClientDashboardPage() {
   const { data: session } = useSession();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, isLoading } = useProjects();
 
-  useEffect(() => {
-    fetch("/api/projects")
-      .then((r) => r.json())
-      .then((d) => { setProjects(d); setLoading(false); });
-  }, []);
-
-  const inProgress = projects.filter((p) => p.status === "IN_PROGRESS").length;
-  const completed  = projects.filter((p) => p.status === "COMPLETED").length;
+  const inProgress  = projects.filter((p) => p.status === "IN_PROGRESS").length;
+  const completed   = projects.filter((p) => p.status === "COMPLETED").length;
   const avgProgress = projects.length
     ? Math.round(projects.reduce((s, p) => s + calcOverallProgress(p.stages ?? []), 0) / projects.length)
     : 0;
@@ -38,10 +36,10 @@ export default function ClientDashboardPage() {
     .slice(0, 5);
 
   const stats = [
-    { label: "Total Projects", value: projects.length, icon: FolderOpen,  color: "text-blue-600",  bg: "bg-blue-50" },
-    { label: "In Progress",    value: inProgress,       icon: TrendingUp,  color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Completed",      value: completed,        icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Avg Progress",   value: `${avgProgress}%`, icon: Clock,      color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Total Projects", value: projects.length },
+    { label: "In Progress",    value: inProgress },
+    { label: "Completed",      value: completed },
+    { label: "Avg Progress",   value: `${avgProgress}%` },
   ];
 
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
@@ -54,26 +52,42 @@ export default function ClientDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="flex items-center gap-4 pt-6">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.bg}`}>
-                <s.icon className={`h-5 w-5 ${s.color}`} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
-                <p className="text-2xl font-bold text-slate-900">{loading ? "—" : s.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {stats.map((s, i) => {
+          const Icon = statIcons[i];
+          return (
+            <Card key={s.label}>
+              <CardContent className="flex items-center gap-4 pt-6">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${statBgs[i]}`}>
+                  <Icon className={`h-5 w-5 ${statColors[i]}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
+                  {isLoading
+                    ? <Skeleton className="mt-1 h-7 w-12" />
+                    : <p className="text-2xl font-bold text-slate-900">{s.value}</p>
+                  }
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <h2 className="mb-4 text-base font-semibold text-slate-800">Active Projects</h2>
-          {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {[...Array(2)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-5 space-y-3">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {projects.map((p) => (
@@ -90,7 +104,12 @@ export default function ClientDashboardPage() {
           </Card>
           <Card>
             <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-            <CardContent><UpdateFeed updates={recentActivity} /></CardContent>
+            <CardContent>
+              {isLoading
+                ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                : <UpdateFeed updates={recentActivity} />
+              }
+            </CardContent>
           </Card>
         </div>
       </div>

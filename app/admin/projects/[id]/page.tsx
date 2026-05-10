@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
@@ -9,15 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { StageProgressChart } from "@/components/charts/StageProgressChart";
+import { StageProgressChartDynamic as StageProgressChart } from "@/components/charts/StageProgressChartDynamic";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
+import { useProject } from "@/lib/hooks/useProjects";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router   = useRouter();
+  const router = useRouter();
+  const { project: swrProject, isLoading, mutate } = useProject(id);
   const [project, setProject]             = useState<Project | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [postTitle, setPostTitle]         = useState("");
@@ -32,16 +34,14 @@ export default function AdminProjectDetailPage() {
   const [showMsForm, setShowMsForm] = useState(false);
   const [addingMs, setAddingMs]     = useState(false);
 
+  // Hydrate local state from SWR on first load
   useEffect(() => {
-    fetch(`/api/projects/${id}`)
-      .then((r) => r.json())
-      .then((d: Project) => {
-        setProject(d);
-        // Default to most recent phase
-        const phases = d.phases ?? [];
-        if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
-      });
-  }, [id]);
+    if (swrProject && !project) {
+      setProject(swrProject);
+      const phases = swrProject.phases ?? [];
+      if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
+    }
+  }, [swrProject]);
 
   async function updateStageProgress(stageId: string, progress: number) {
     await fetch(`/api/projects/${id}/stages`, {
@@ -117,7 +117,7 @@ export default function AdminProjectDetailPage() {
     setAddingMs(false);
   }
 
-  if (!project) return <div className="text-sm text-slate-400">Loading…</div>;
+  if (isLoading || !project) return <div className="text-sm text-slate-400">Loading…</div>;
 
   const stages: Stage[]         = project.stages ?? [];
   const phases: Phase[]         = project.phases ?? [];

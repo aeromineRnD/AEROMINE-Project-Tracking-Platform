@@ -1,32 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Project } from "@/types";
+import { useProject } from "@/lib/hooks/useProjects";
 
 export default function EditProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { project } = useProject(id);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", location: "", startDate: "", estimatedEnd: "", status: "IN_PROGRESS", coverImage: "", description: "" });
 
   useEffect(() => {
-    fetch(`/api/projects/${id}`)
-      .then((r) => r.json())
-      .then((p: Project) => setForm({
-        name: p.name,
-        location: p.location,
-        startDate: p.startDate.split("T")[0],
-        estimatedEnd: p.estimatedEnd.split("T")[0],
-        status: p.status,
-        coverImage: p.coverImage ?? "",
-        description: p.description ?? "",
-      }));
-  }, [id]);
+    if (project) setForm({
+      name: project.name,
+      location: project.location,
+      startDate: project.startDate.split("T")[0],
+      estimatedEnd: project.estimatedEnd.split("T")[0],
+      status: project.status,
+      coverImage: project.coverImage ?? "",
+      description: project.description ?? "",
+    });
+  }, [project?.id]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [k]: e.target.value }));

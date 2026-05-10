@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserPlus, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import useSWR from "swr";
 
 interface Client {
   id: string;
@@ -12,18 +13,15 @@ interface Client {
   clientProjects: { project: { id: string; name: string } }[];
 }
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 export default function AdminClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: clients = [], isLoading: loading, mutate } = useSWR<Client[]>("/api/clients", fetcher, {
+    revalidateOnFocus: false,
+  });
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/clients")
-      .then((r) => r.json())
-      .then((d) => { setClients(d); setLoading(false); });
-  }, []);
 
   async function addClient(e: React.FormEvent) {
     e.preventDefault();
@@ -35,7 +33,7 @@ export default function AdminClientsPage() {
     });
     if (res.ok) {
       const c = await res.json();
-      setClients((prev) => [...prev, { ...c, clientProjects: [] }]);
+      mutate([...clients, { ...c, clientProjects: [] }], false);
       setForm({ name: "", email: "" });
       setShowForm(false);
     }

@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ProjectCard } from "@/components/projects/ProjectCard";
-import type { Project } from "@/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useProjects } from "@/lib/hooks/useProjects";
 
 export default function ClientProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/projects")
-      .then((r) => r.json())
-      .then((d) => { setProjects(d); setLoading(false); });
-  }, []);
+  const { projects, isLoading: loading } = useProjects();
 
   return (
     <div className="space-y-6">
@@ -22,7 +16,15 @@ export default function ClientProjectsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-400">Loading…</p>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}><CardContent className="pt-5 space-y-3">
+              <Skeleton className="h-36 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </CardContent></Card>
+          ))}
+        </div>
       ) : projects.length === 0 ? (
         <p className="text-sm text-slate-400">No projects assigned to your account yet.</p>
       ) : (
