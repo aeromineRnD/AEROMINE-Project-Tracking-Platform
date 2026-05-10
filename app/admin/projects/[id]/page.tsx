@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { AnimatedProgress } from "@/components/ui/AnimatedProgress";
 import { StageProgressChartDynamic as StageProgressChart } from "@/components/charts/StageProgressChartDynamic";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
@@ -230,7 +230,7 @@ export default function AdminProjectDetailPage() {
                 <span className="text-slate-500">Progress</span>
                 <span className="font-semibold text-slate-900">{overall}%</span>
               </div>
-              <Progress value={overall} className="h-3" />
+              <AnimatedProgress value={overall} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
                 <span>Started {format(new Date(project.startDate), "MMM d, yyyy")}</span>
                 <span>Target {format(new Date(project.estimatedEnd), "MMM d, yyyy")}</span>

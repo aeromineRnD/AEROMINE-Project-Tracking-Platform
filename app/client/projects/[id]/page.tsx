@@ -7,7 +7,7 @@ import { ArrowLeft, MapPin, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { AnimatedProgress } from "@/components/ui/AnimatedProgress";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
@@ -164,15 +164,11 @@ export default function ClientProjectDetailPage() {
                   <span className="w-36 flex-shrink-0 text-sm text-slate-600 truncate">
                     {stage.nameEn}
                   </span>
-                  <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${stage.progress}%`,
-                        backgroundColor: stageColor(stage.progress),
-                      }}
-                    />
-                  </div>
+                  <AnimatedProgress
+                    value={stage.progress}
+                    color={stageColor(stage.progress)}
+                    className="flex-1 h-3"
+                  />
                   <span className="w-10 flex-shrink-0 text-right text-sm font-semibold text-slate-700">
                     {stage.progress}%
                   </span>
@@ -207,7 +203,7 @@ export default function ClientProjectDetailPage() {
                 <span className="text-slate-500">Progress</span>
                 <span className="font-bold text-slate-900">{overallProgress}%</span>
               </div>
-              <Progress value={overallProgress} className="h-3" />
+              <AnimatedProgress value={overallProgress} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
                 <span>Started {format(new Date(project.startDate), "MMM d, yyyy")}</span>
                 <span>Target {format(new Date(project.estimatedEnd), "MMM d, yyyy")}</span>

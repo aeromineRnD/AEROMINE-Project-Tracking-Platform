@@ -3,7 +3,7 @@ import Image from "next/image";
 import { MapPin, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { AnimatedProgress } from "@/components/ui/AnimatedProgress";
 import { calcOverallProgress, STATUS_LABELS, type Project } from "@/types";
 import { format } from "date-fns";
 
@@ -49,7 +49,7 @@ export function ProjectCard({ project, href }: Props) {
               <span>Progress</span>
               <span className="font-medium text-slate-700">{progress}%</span>
             </div>
-            <Progress value={progress} className="h-1.5" />
+            <AnimatedProgress value={progress} className="h-1.5" />
           </div>
           <div className="mt-2 flex items-center gap-1 text-xs text-slate-400">
             <Calendar className="h-3 w-3" />
