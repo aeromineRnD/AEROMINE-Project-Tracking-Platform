@@ -1,34 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProject } from "@/lib/hooks/useProjects";
 
+interface ClientOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export default function EditProjectPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { project } = useProject(id);
+  const router  = useRouter();
+  const { project, mutate } = useProject(id);
+
+  // ── Project details form ────────────────────────────────────────────────
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", location: "", startDate: "", estimatedEnd: "", status: "IN_PROGRESS", coverImage: "", description: "" });
+  const [form, setForm] = useState({
+    name: "", location: "", startDate: "", estimatedEnd: "",
+    status: "IN_PROGRESS", coverImage: "", description: "",
+  });
 
   useEffect(() => {
     if (project) setForm({
-      name: project.name,
-      location: project.location,
-      startDate: project.startDate.split("T")[0],
+      name:         project.name,
+      location:     project.location,
+      startDate:    project.startDate.split("T")[0],
       estimatedEnd: project.estimatedEnd.split("T")[0],
-      status: project.status,
-      coverImage: project.coverImage ?? "",
-      description: project.description ?? "",
+      status:       project.status,
+      coverImage:   project.coverImage ?? "",
+      description:  project.description ?? "",
     });
   }, [project?.id]);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm((prev) => ({ ...prev, [k]: e.target.value }));
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +53,123 @@ export default function EditProjectPage() {
     router.push(`/admin/projects/${id}`);
   }
 
+  // ── Client management ───────────────────────────────────────────────────
+  const [assigned, setAssigned]     = useState<ClientOption[]>([]);
+  const [allClients, setAllClients] = useState<ClientOption[]>([]);
+  const [search, setSearch]         = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [showNewName, setShowNewName] = useState(false);
+  const [newName, setNewName]       = useState("");
+  const [clientBusy, setClientBusy] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Initialise assigned from SWR project data
+  useEffect(() => {
+    if (project?.clients) {
+      setAssigned(
+        project.clients.map((pc: any) => ({
+          id:    pc.client.id,
+          name:  pc.client.name,
+          email: pc.client.email,
+        }))
+      );
+    }
+  }, [project?.id]);
+
+  // Load all available clients for search
+  useEffect(() => {
+    fetch("/api/clients")
+      .then((r) => r.json())
+      .then(setAllClients)
+      .catch(() => {});
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = search.trim()
+    ? allClients.filter(
+        (c) =>
+          !assigned.find((a) => a.id === c.id) &&
+          (c.name.toLowerCase().includes(search.toLowerCase()) ||
+           c.email.toLowerCase().includes(search.toLowerCase()))
+      )
+    : [];
+
+  const exactMatch = allClients.find(
+    (c) => c.email.toLowerCase() === search.trim().toLowerCase()
+  );
+  const showCreate =
+    search.trim().length > 0 &&
+    !exactMatch &&
+    !assigned.find((a) => a.email === search.trim());
+
+  async function addExisting(client: ClientOption) {
+    setClientBusy(true);
+    const res = await fetch(`/api/projects/${id}/clients`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: client.id }),
+    });
+    if (res.ok) {
+      setAssigned((prev) => [...prev, client]);
+      mutate();
+    }
+    setSearch(""); setSearchOpen(false); setShowNewName(false);
+    setClientBusy(false);
+  }
+
+  async function addNew() {
+    if (!search.trim() || !newName.trim()) return;
+    setClientBusy(true);
+
+    // 1. Create the client account
+    const createRes = await fetch("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName.trim(), email: search.trim() }),
+    });
+    if (!createRes.ok) { setClientBusy(false); return; }
+    const created: ClientOption = await createRes.json();
+
+    // 2. Assign to project
+    const assignRes = await fetch(`/api/projects/${id}/clients`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: created.id }),
+    });
+    if (assignRes.ok) {
+      setAssigned((prev) => [...prev, created]);
+      setAllClients((prev) => [...prev, created]);
+      mutate();
+    }
+    setSearch(""); setNewName(""); setShowNewName(false); setSearchOpen(false);
+    setClientBusy(false);
+  }
+
+  async function removeClient(clientId: string) {
+    setClientBusy(true);
+    const res = await fetch(`/api/projects/${id}/clients`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId }),
+    });
+    if (res.ok) {
+      setAssigned((prev) => prev.filter((c) => c.id !== clientId));
+      mutate();
+    }
+    setClientBusy(false);
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
@@ -49,16 +178,18 @@ export default function EditProjectPage() {
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Edit Project</h1>
       </div>
+
+      {/* ── Project Details ────────────────────────────────── */}
       <Card>
         <CardHeader><CardTitle>Project Details</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-4">
             {([
-              ["name", "Project Name", "text"],
-              ["location", "Location", "text"],
-              ["startDate", "Start Date", "date"],
+              ["name",         "Project Name",         "text"],
+              ["location",     "Location",             "text"],
+              ["startDate",    "Start Date",           "date"],
               ["estimatedEnd", "Estimated Completion", "date"],
-              ["coverImage", "Cover Image URL", "url"],
+              ["coverImage",   "Cover Image URL",      "url"],
             ] as [keyof typeof form, string, string][]).map(([key, label, type]) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
@@ -85,6 +216,121 @@ export default function EditProjectPage() {
               <Link href={`/admin/projects/${id}`}><Button type="button" variant="outline">Cancel</Button></Link>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* ── Assign Clients ─────────────────────────────────── */}
+      <Card>
+        <CardHeader><CardTitle>Assigned Clients</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {/* Current chips */}
+          {assigned.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {assigned.map((c) => (
+                <div key={c.id} className="flex items-center gap-1.5 rounded-full bg-aeromine-50 border border-aeromine-200 px-3 py-1 text-xs text-aeromine-700">
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-aeromine-400">{c.email}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeClient(c.id)}
+                    disabled={clientBusy}
+                    className="ml-0.5 hover:text-red-500 transition-colors disabled:opacity-40"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search box */}
+          <div className="relative" ref={searchRef}>
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-aeromine-500 bg-white">
+              <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Search by name or email to add…"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setShowNewName(false); setSearchOpen(true); }}
+                onFocus={() => setSearchOpen(true)}
+                className="flex-1 text-sm outline-none bg-transparent"
+              />
+              {search && (
+                <button type="button" onClick={() => { setSearch(""); setShowNewName(false); setSearchOpen(false); }}>
+                  <X className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown */}
+            {searchOpen && search.trim() && (
+              <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border bg-white shadow-lg z-20 overflow-hidden">
+                {filtered.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => addExisting(c)}
+                    disabled={clientBusy}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left disabled:opacity-50"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-aeromine-100 text-aeromine-700 text-xs font-bold flex-shrink-0">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">{c.name}</p>
+                      <p className="text-xs text-slate-400">{c.email}</p>
+                    </div>
+                  </button>
+                ))}
+
+                {showCreate && !showNewName && (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewName(true)}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-aeromine-50 transition-colors text-left border-t"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 flex-shrink-0">
+                      <UserPlus className="h-3.5 w-3.5 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-aeromine-600">Create new client</p>
+                      <p className="text-xs text-slate-400">{search.trim()}</p>
+                    </div>
+                  </button>
+                )}
+
+                {filtered.length === 0 && !showCreate && (
+                  <p className="px-4 py-3 text-sm text-slate-400">No clients found</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* New client name field */}
+          {showNewName && (
+            <div className="rounded-lg border border-aeromine-200 bg-aeromine-50 p-3 space-y-2">
+              <p className="text-xs font-medium text-aeromine-700">New client — enter full name</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
+                  autoFocus
+                />
+                <Button type="button" size="sm" onClick={addNew} disabled={!newName.trim() || clientBusy}>
+                  Add
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => { setShowNewName(false); setNewName(""); }}>
+                  Cancel
+                </Button>
+              </div>
+              <p className="text-xs text-slate-400">Email: {search.trim()}</p>
+            </div>
+          )}
+
+          <p className="text-xs text-slate-400">Changes to clients are saved immediately.</p>
         </CardContent>
       </Card>
     </div>
