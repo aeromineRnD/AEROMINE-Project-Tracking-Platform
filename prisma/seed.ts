@@ -50,7 +50,7 @@ async function main() {
   const adminAlpha = await prisma.user.create({
     data: {
       id: "user_admin_alpha",
-      email: "stavros@alphaconstruct.gr",
+      email: "admin1@aeromine.gr",
       name: "Stavros Papadopoulos",
       role: "ADMIN",
       password: adminHash,
@@ -60,7 +60,7 @@ async function main() {
   const adminBeta = await prisma.user.create({
     data: {
       id: "user_admin_beta",
-      email: "maria@betabuild.gr",
+      email: "admin2@aeromine.gr",
       name: "Maria Georgiou",
       role: "ADMIN",
       password: adminHash,
@@ -70,7 +70,7 @@ async function main() {
   const clientNikos = await prisma.user.create({
     data: {
       id: "user_client_nikos",
-      email: "nikos.papadimitriou@gmail.com",
+      email: "client1@gmail.com",
       name: "Nikos Papadimitriou",
       role: "CLIENT",
       password: clientHash,
@@ -80,7 +80,7 @@ async function main() {
   const clientEleni = await prisma.user.create({
     data: {
       id: "user_client_eleni",
-      email: "eleni.papadimitriou@gmail.com",
+      email: "client2@gmail.com",
       name: "Eleni Papadimitriou",
       role: "CLIENT",
       password: clientHash,
@@ -90,7 +90,7 @@ async function main() {
   const clientGeorge = await prisma.user.create({
     data: {
       id: "user_client_george",
-      email: "george.katsaros@outlook.com",
+      email: "client3@outlook.com",
       name: "George Katsaros",
       role: "CLIENT",
       password: clientHash,
@@ -434,11 +434,11 @@ async function main() {
   console.log("\n Seed complete!");
   console.log("─────────────────────────────────────────");
   console.log("Demo credentials:");
-  console.log("  Admin 1  : stavros@alphaconstruct.gr  / admin");
-  console.log("  Admin 2  : maria@betabuild.gr         / admin");
-  console.log("  Client 1 : nikos.papadimitriou@gmail.com   / user");
-  console.log("  Client 2 : eleni.papadimitriou@gmail.com   / user");
-  console.log("  Client 3 : george.katsaros@outlook.com     / user");
+  console.log("  Admin 1  : admin1@aeromine.gr   / admin");
+  console.log("  Admin 2  : admin2@aeromine.gr   / admin");
+  console.log("  Client 1 : client1@gmail.com    / user");
+  console.log("  Client 2 : client2@gmail.com    / user");
+  console.log("  Client 3 : client3@outlook.com  / user");
   console.log("─────────────────────────────────────────");
 }
 
