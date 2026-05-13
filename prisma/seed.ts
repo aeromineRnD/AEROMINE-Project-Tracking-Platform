@@ -190,7 +190,7 @@ async function main() {
         order: 1,
         capturedAt: new Date("2024-06-15"),
         overallProgress: 20,
-        modelPath: "/models/Example_2_phase_1/scene.gltf",
+        modelPath: "/models/Phase_1_Glyfada_Villa/untitled.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 25  },
@@ -213,7 +213,7 @@ async function main() {
         order: 2,
         capturedAt: new Date("2025-02-10"),
         overallProgress: 80,
-        modelPath: "/models/Example_2_phase_2/scene.gltf",
+        modelPath: "/models/Phase_2_Glyfada_Villa/More%20than%20walls%20-%20doors.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 100 },
@@ -306,7 +306,7 @@ async function main() {
         order: 1,
         capturedAt: new Date("2024-11-20"),
         overallProgress: 20,
-        modelPath: "/models/Phase_1/1st%20Model.gltf",
+        modelPath: "/models/Phase_1_Kifisia_Residence/1st%20Model.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 20  },
@@ -329,7 +329,7 @@ async function main() {
         order: 2,
         capturedAt: new Date("2025-03-08"),
         overallProgress: 80,
-        modelPath: "/models/Phase_2/aeromine_no_doors.gltf",
+        modelPath: "/models/Phase_2_Kifisia_Residence/aeromine_no_doors.gltf",
         stageSnapshot: JSON.stringify([
           { nameEn: "Foundation",           nameEl: "Θεμελίωση",           progress: 100 },
           { nameEn: "Structural Frame",     nameEl: "Φέρων Οργανισμός",    progress: 100 },
