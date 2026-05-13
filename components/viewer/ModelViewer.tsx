@@ -64,36 +64,6 @@ export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
 
   return (
     <div className="relative w-full h-[420px] bg-[#0f172a]">
-      {/* Colour legend */}
-      <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/60 px-3 py-2 text-xs text-white space-y-1 pointer-events-none">
-        {[
-          { label: "Completed",   color: "#22c55e" },
-          { label: "In Progress", color: "#f59e0b" },
-          { label: "Not Started", color: "#94a3b8" },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Stage progress overlay */}
-      {stages.length > 0 && (
-        <div className="absolute bottom-10 left-3 z-10 rounded-lg bg-black/60 px-3 py-2 text-xs text-white space-y-1 pointer-events-none">
-          {stages.slice(0, 5).map((s) => (
-            <div key={s.id} className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: stageColor(s.progress) }} />
-              <span className="truncate max-w-[120px]">{s.nameEn}</span>
-              <span className="ml-auto pl-3 font-semibold">{s.progress}%</span>
-            </div>
-          ))}
-          {stages.length > 5 && (
-            <p className="text-slate-400 text-[10px] mt-0.5">+{stages.length - 5} more stages</p>
-          )}
-        </div>
-      )}
-
       <p className="absolute bottom-3 right-3 z-10 text-[11px] text-slate-500 pointer-events-none">
         Drag to rotate · Scroll to zoom
       </p>
