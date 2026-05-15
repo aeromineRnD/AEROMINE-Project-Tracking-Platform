@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireProjectAccess, requireProjectEdit } from "@/lib/apiAuth";
-import { notifyProjectClients, notifyProjectAdmin } from "@/lib/notify";
+import { notifyProjectClients } from "@/lib/notify";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireProjectAccess(req, params.id);
@@ -34,12 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     include: { author: { select: { id: true, name: true } } },
   });
 
-  // Notify clients — or notify admin if this is a client 3D request
-  if (title === "3D Walkthrough Requested") {
-    await notifyProjectAdmin(params.id, "3D Walkthrough Requested", content);
-  } else {
-    await notifyProjectClients(params.id, `New update: ${title}`, content);
-  }
+  await notifyProjectClients(params.id, `New update: ${title}`, content);
 
   return NextResponse.json(update, { status: 201 });
 }

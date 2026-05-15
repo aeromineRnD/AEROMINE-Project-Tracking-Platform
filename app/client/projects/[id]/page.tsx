@@ -33,15 +33,7 @@ export default function ClientProjectDetailPage() {
 
   async function request3D() {
     setRequesting3D(true);
-    await fetch(`/api/projects/${id}/updates`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "3D Walkthrough Requested",
-        content: "The client has requested a 3D walkthrough of the construction site.",
-        type: "TEXT",
-      }),
-    });
+    await fetch(`/api/projects/${id}/request-3d`, { method: "POST" });
     setRequested3D(true);
     setRequesting3D(false);
   }
