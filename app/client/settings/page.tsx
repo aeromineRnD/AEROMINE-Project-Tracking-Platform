@@ -59,22 +59,6 @@ export default function ClientSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Notifications */}
-      <Card>
-        <CardHeader><CardTitle>{t("notificationsSection")}</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {([
-            { labelKey: "emailProgressUpdate" as const, key: "email" },
-            { labelKey: "emailMilestoneReached" as const, key: "milestone" },
-          ]).map(({ labelKey, key }) => (
-            <label key={key} className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm text-slate-700">{t(labelKey)}</span>
-              <input type="checkbox" defaultChecked className="h-4 w-4 accent-aeromine-600" />
-            </label>
-          ))}
-          <p className="text-xs text-slate-400 border-t pt-3">{t("realEmailNote")}</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
