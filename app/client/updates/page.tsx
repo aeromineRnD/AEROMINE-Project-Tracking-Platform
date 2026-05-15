@@ -1,21 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
-import { useProjects } from "@/lib/hooks/useProjects";
-import type { ProjectUpdate } from "@/types";
+import { useUpdates } from "@/lib/hooks/useProjects";
 
 export default function ClientUpdatesPage() {
-  const { projects, isLoading: loading } = useProjects();
-  const updates = useMemo(() =>
-    projects
-      .flatMap((p) => (p as any).updates ?? [])
-      .sort((a: ProjectUpdate, b: ProjectUpdate) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ),
-    [projects]
-  );
+  const { updates, isLoading } = useUpdates();
 
   return (
     <div className="space-y-6">
@@ -25,7 +15,11 @@ export default function ClientUpdatesPage() {
       </div>
       <Card>
         <CardContent className="pt-6">
-          {loading ? <p className="text-sm text-slate-400">Loading…</p> : <UpdateFeed updates={updates} />}
+          {isLoading ? (
+            <p className="text-sm text-slate-400">Loading…</p>
+          ) : (
+            <UpdateFeed updates={updates} />
+          )}
         </CardContent>
       </Card>
     </div>

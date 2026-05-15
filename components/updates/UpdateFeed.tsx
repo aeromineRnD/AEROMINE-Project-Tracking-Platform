@@ -50,7 +50,9 @@ export function UpdateFeed({ updates }: Props) {
                 </div>
               )}
               <p className="mt-1 text-[11px] text-slate-400">
-                {u.author?.name} · {format(new Date(u.createdAt), "MMM d, yyyy")}
+                {u.author?.name}
+                {u.project && <span className="text-slate-300"> · {u.project.name}</span>}
+                {" · "}{format(new Date(u.createdAt), "MMM d, yyyy")}
               </p>
             </div>
           </div>

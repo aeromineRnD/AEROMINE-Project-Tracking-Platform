@@ -27,3 +27,10 @@ export function useClients() {
   });
   return { clients: data ?? [], error, isLoading };
 }
+
+export function useUpdates() {
+  const { data, error, isLoading, mutate } = useSWR("/api/updates", fetcher, {
+    revalidateOnFocus: false,
+  });
+  return { updates: data ?? [], error, isLoading, mutate };
+}

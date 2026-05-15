@@ -70,6 +70,7 @@ export interface ProjectUpdate {
   mediaUrls?: string | null;
   createdAt: string;
   author?: User;
+  project?: { id: string; name: string };
 }
 
 export interface Milestone {
