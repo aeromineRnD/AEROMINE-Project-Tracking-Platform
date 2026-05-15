@@ -229,21 +229,6 @@ export default function ClientProjectDetailPage() {
                 </div>
               ))}
 
-              {/* Dot summary row — matches the reference screenshot */}
-              <div className="flex flex-wrap gap-x-5 gap-y-3 pt-3 mt-2 border-t">
-                {activeStages.map((stage) => (
-                  <div key={stage.nameEn} className="flex flex-col items-center gap-1 min-w-[60px]">
-                    <div
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: stageColor(stage.progress) }}
-                    />
-                    <span className="text-[10px] text-slate-400 text-center leading-tight">
-                      {stage.nameEn}
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">{stage.progress}%</span>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
 
