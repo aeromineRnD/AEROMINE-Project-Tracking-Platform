@@ -4,8 +4,16 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getSessionUser, unauthorized } from "@/lib/apiAuth";
 
-const MAX_SIZE    = 50 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_SIZE = 100 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  "image/jpeg", "image/png", "image/webp", "image/gif",
+  "application/pdf",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "video/mp4", "video/quicktime", "video/webm",
+];
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();

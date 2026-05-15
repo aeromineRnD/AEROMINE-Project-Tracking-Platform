@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ export default function AdminProjectDetailPage() {
   const [postTitle, setPostTitle]         = useState("");
   const [postContent, setPostContent]     = useState("");
   const [posting, setPosting]             = useState(false);
+  const [attachments, setAttachments]     = useState<{ name: string; url: string; type: string }[]>([]);
+  const [uploading, setUploading]         = useState(false);
+  const fileInputRef                      = useRef<HTMLInputElement>(null);
 
   // Milestone add form
   const [msTitle, setMsTitle]       = useState("");
@@ -87,19 +90,48 @@ export default function AdminProjectDetailPage() {
     });
   }
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploading(true);
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("category", "updates");
+      const res = await fetch("/api/uploads", { method: "POST", body: fd });
+      if (res.ok) {
+        const { url } = await res.json();
+        setAttachments((prev) => [...prev, { name: file.name, url, type: file.type }]);
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setUploading(false);
+  }
+
   async function postUpdate(e: React.FormEvent) {
     e.preventDefault();
     if (!postTitle.trim() || !postContent.trim()) return;
     setPosting(true);
+
+    const hasVideo = attachments.some((a) => a.type.startsWith("video/"));
+    const hasImage = attachments.some((a) => a.type.startsWith("image/"));
+    const hasDoc   = attachments.some((a) => !a.type.startsWith("image/") && !a.type.startsWith("video/"));
+    const type = hasVideo ? "VIDEO" : hasDoc ? "DOCUMENT" : hasImage ? "PHOTO" : "TEXT";
+
     const res = await fetch(`/api/projects/${id}/updates`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: postTitle, content: postContent, type: "TEXT" }),
+      body: JSON.stringify({
+        title: postTitle,
+        content: postContent,
+        type,
+        mediaUrls: attachments.length ? attachments.map((a) => a.url) : undefined,
+      }),
     });
     if (res.ok) {
       const update = await res.json();
       setProject((prev) => prev ? { ...prev, updates: [update, ...(prev as any).updates ?? []] } : prev);
-      setPostTitle(""); setPostContent("");
+      setPostTitle(""); setPostContent(""); setAttachments([]);
     }
     setPosting(false);
   }
@@ -491,9 +523,54 @@ export default function AdminProjectDetailPage() {
                   value={postContent}
                   onChange={(e) => setPostContent(e.target.value)}
                 />
-                <Button type="submit" size="sm" disabled={posting}>
-                  <Plus className="h-4 w-4" /> {posting ? "Posting…" : "Post Update"}
-                </Button>
+
+                {/* Attachments */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf,.ppt,.pptx,.doc,.docx,video/mp4,video/quicktime,video/webm"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {attachments.map((a, i) => {
+                      const isImage = a.type.startsWith("image/");
+                      const isVideo = a.type.startsWith("video/");
+                      const Icon = isImage ? ImageIcon : isVideo ? Video : FileText;
+                      return (
+                        <div key={i} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 pl-2 pr-1 py-1 text-xs text-slate-700 max-w-[180px]">
+                          <Icon className="h-3.5 w-3.5 flex-shrink-0 text-aeromine-500" />
+                          <span className="truncate flex-1">{a.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                            className="flex-shrink-0 hover:text-red-500 transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Button type="submit" size="sm" disabled={posting || uploading}>
+                    <Plus className="h-4 w-4" /> {posting ? "Posting…" : "Post Update"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:border-aeromine-400 hover:text-aeromine-600 disabled:opacity-50 transition-colors"
+                  >
+                    <Paperclip className="h-3.5 w-3.5" />
+                    {uploading ? "Uploading…" : "Attach files"}
+                  </button>
+                </div>
               </form>
             </CardContent>
           </Card>
