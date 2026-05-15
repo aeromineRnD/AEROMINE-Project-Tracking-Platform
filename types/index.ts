@@ -12,6 +12,13 @@ export interface User {
   updatedAt: string;
 }
 
+export interface StageMaterial {
+  description: string;
+  quantity: string;
+  unit: string;
+  invoiceUrl?: string | null;
+}
+
 export interface Stage {
   id: string;
   projectId: string;
@@ -20,6 +27,7 @@ export interface Stage {
   order: number;
   progress: number;
   modelPath?: string | null;
+  materials?: string | null; // JSON string — parse with JSON.parse()
   createdAt: string;
   updatedAt: string;
 }

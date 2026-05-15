@@ -14,9 +14,10 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
+import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
-import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
+import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate, type StageMaterial } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -642,6 +643,20 @@ export default function AdminProjectDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Materials & Invoices */}
+          <StageMaterialsCard
+            stages={stages}
+            projectId={id}
+            onUpdate={(stageId, materials) => {
+              setProject((prev) => prev
+                ? { ...prev, stages: (prev.stages ?? []).map((s) =>
+                    s.id === stageId ? { ...s, materials: JSON.stringify(materials) } : s
+                  )}
+                : prev
+              );
+            }}
+          />
 
           {/* Post Update */}
           <Card>

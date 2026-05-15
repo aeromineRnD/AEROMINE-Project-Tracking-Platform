@@ -12,6 +12,7 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
+import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import {
@@ -303,6 +304,12 @@ export default function ClientProjectDetailPage() {
               <MilestoneTracker milestones={milestones} />
             </CardContent>
           </Card>
+
+          <StageMaterialsCard
+            stages={project.stages ?? []}
+            projectId={id}
+            readOnly
+          />
         </div>
       </div>
     </div>

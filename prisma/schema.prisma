@@ -94,6 +94,7 @@ model Stage {
   order     Int
   progress  Int      @default(0)
   modelPath String?
+  materials String?  // JSON: [{"description":"...","quantity":"80","unit":"m3","invoiceUrl":"..."}]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

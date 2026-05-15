@@ -13,14 +13,19 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   });
   if (!owned) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { nameEn, nameEl, order } = await req.json();
+  const { nameEn, nameEl, order, materials } = await req.json();
 
   const stage = await prisma.stage.update({
     where: { id: params.stageId },
     data: {
-      ...(nameEn !== undefined && { nameEn }),
-      ...(nameEl !== undefined && { nameEl }),
-      ...(order  !== undefined && { order }),
+      ...(nameEn     !== undefined && { nameEn }),
+      ...(nameEl     !== undefined && { nameEl }),
+      ...(order      !== undefined && { order }),
+      ...(materials  !== undefined && {
+        materials: Array.isArray(materials) && materials.length > 0
+          ? JSON.stringify(materials)
+          : null,
+      }),
     },
   });
 
