@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireProjectEdit } from "@/lib/apiAuth";
+import { notifyProjectClients } from "@/lib/notify";
 
 type Ctx = { params: { id: string; stageId: string } };
 
@@ -28,6 +29,14 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       }),
     },
   });
+
+  if (materials !== undefined && Array.isArray(materials) && materials.length > 0) {
+    await notifyProjectClients(
+      params.id,
+      "Materials updated",
+      `New materials have been logged for stage: ${owned.nameEn}.`,
+    );
+  }
 
   return NextResponse.json(stage);
 }
