@@ -70,6 +70,24 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   const body = await req.json();
 
+  // Bulk reorder: { reorder: [{ id, order }] }
+  if (body.reorder) {
+    const ids: string[] = body.reorder.map((s: { id: string }) => s.id);
+    const owned = await prisma.stage.findMany({
+      where: { id: { in: ids }, projectId: params.id },
+      select: { id: true },
+    });
+    if (owned.length !== ids.length)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    await Promise.all(
+      body.reorder.map((s: { id: string; order: number }) =>
+        prisma.stage.update({ where: { id: s.id }, data: { order: s.order } })
+      )
+    );
+    return NextResponse.json({ success: true });
+  }
+
   // Bulk update: { stages: [{ id, progress }] }
   if (body.stages) {
     const stageIds: string[] = body.stages.map((s: { id: string }) => s.id);

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Search, UserPlus, X, ImageIcon } from "lucide-react";
+import { ArrowLeft, Search, UserPlus, X, ImageIcon, ChevronUp, ChevronDown, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProject } from "@/lib/hooks/useProjects";
@@ -197,6 +197,85 @@ export default function EditProjectPage() {
       mutate();
     }
     setClientBusy(false);
+  }
+
+  // ── Stage management ────────────────────────────────────────────────────
+  interface LocalStage { id: string | null; nameEn: string; nameEl: string; order: number; }
+  const [stages, setStages]       = useState<LocalStage[]>([]);
+  const [stageBusy, setStageBusy] = useState(false);
+  const [newStageEn, setNewStageEn] = useState("");
+  const [newStageEl, setNewStageEl] = useState("");
+
+  useEffect(() => {
+    if (project?.stages) {
+      setStages(
+        [...project.stages]
+          .sort((a, b) => a.order - b.order)
+          .map((s) => ({ id: s.id, nameEn: s.nameEn, nameEl: s.nameEl, order: s.order }))
+      );
+    }
+  }, [project?.id]);
+
+  function moveStage(index: number, dir: -1 | 1) {
+    setStages((prev) => {
+      const next = [...prev];
+      const swap = index + dir;
+      if (swap < 0 || swap >= next.length) return prev;
+      [next[index], next[swap]] = [next[swap], next[index]];
+      return next.map((s, i) => ({ ...s, order: i + 1 }));
+    });
+  }
+
+  async function saveStages() {
+    setStageBusy(true);
+    // 1. Patch name changes for existing stages
+    await Promise.all(
+      stages
+        .filter((s) => s.id)
+        .map((s) =>
+          fetch(`/api/projects/${id}/stages/${s.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nameEn: s.nameEn, nameEl: s.nameEl, order: s.order }),
+          })
+        )
+    );
+    // 2. Reorder
+    await fetch(`/api/projects/${id}/stages`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reorder: stages.filter((s) => s.id).map((s) => ({ id: s.id!, order: s.order })) }),
+    });
+    mutate();
+    setStageBusy(false);
+  }
+
+  async function deleteStage(stageId: string) {
+    if (!confirm("Delete this stage? Progress data will be lost.")) return;
+    const res = await fetch(`/api/projects/${id}/stages/${stageId}`, { method: "DELETE" });
+    if (res.ok) {
+      setStages((prev) => prev.filter((s) => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 })));
+      mutate();
+    }
+  }
+
+  async function addStage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newStageEn.trim()) return;
+    setStageBusy(true);
+    const nextOrder = stages.length + 1;
+    const res = await fetch(`/api/projects/${id}/stages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nameEn: newStageEn.trim(), nameEl: newStageEl.trim() || newStageEn.trim(), order: nextOrder, progress: 0 }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setStages((prev) => [...prev, { id: created.id, nameEn: created.nameEn, nameEl: created.nameEl, order: created.order }]);
+      setNewStageEn(""); setNewStageEl("");
+      mutate();
+    }
+    setStageBusy(false);
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -395,6 +474,98 @@ export default function EditProjectPage() {
           )}
 
           <p className="text-xs text-slate-400">Changes to clients are saved immediately.</p>
+        </CardContent>
+      </Card>
+
+      {/* ── Stage Management ───────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Construction Stages</CardTitle>
+            <Button size="sm" onClick={saveStages} disabled={stageBusy}>
+              {stageBusy ? "Saving…" : "Save Order & Names"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {stages.map((stage, i) => (
+            <div key={stage.id ?? i} className="flex items-center gap-2">
+              {/* Up / Down */}
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => moveStage(i, -1)}
+                  disabled={i === 0}
+                  className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-20 transition-colors"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveStage(i, 1)}
+                  disabled={i === stages.length - 1}
+                  className="h-5 w-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-20 transition-colors"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Order badge */}
+              <span className="w-5 flex-shrink-0 text-center text-xs font-medium text-slate-400">
+                {i + 1}
+              </span>
+
+              {/* Name EN */}
+              <input
+                value={stage.nameEn}
+                onChange={(e) => setStages((prev) => prev.map((s, j) => j === i ? { ...s, nameEn: e.target.value } : s))}
+                placeholder="English name"
+                className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+              />
+
+              {/* Name EL */}
+              <input
+                value={stage.nameEl}
+                onChange={(e) => setStages((prev) => prev.map((s, j) => j === i ? { ...s, nameEl: e.target.value } : s))}
+                placeholder="Greek name"
+                className="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+              />
+
+              {/* Delete */}
+              <button
+                type="button"
+                onClick={() => stage.id && deleteStage(stage.id)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+
+          {/* Add new stage */}
+          <form onSubmit={addStage} className="flex items-center gap-2 pt-2 border-t mt-2">
+            <span className="w-5 flex-shrink-0" />
+            <span className="w-5 flex-shrink-0" />
+            <input
+              value={newStageEn}
+              onChange={(e) => setNewStageEn(e.target.value)}
+              placeholder="English name"
+              className="flex-1 rounded-lg border border-dashed border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+            />
+            <input
+              value={newStageEl}
+              onChange={(e) => setNewStageEl(e.target.value)}
+              placeholder="Greek name (optional)"
+              className="flex-1 rounded-lg border border-dashed border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+            />
+            <button
+              type="submit"
+              disabled={!newStageEn.trim() || stageBusy}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-aeromine-600 text-white hover:bg-aeromine-700 disabled:opacity-40 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </form>
         </CardContent>
       </Card>
     </div>
