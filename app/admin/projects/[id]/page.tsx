@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, Box } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,13 @@ export default function AdminProjectDetailPage() {
   const [phaseCapturedAt, setPhaseCapturedAt] = useState(new Date().toISOString().split("T")[0]);
   const [phaseModelPath, setPhaseModelPath]   = useState("");
   const [addingPhase, setAddingPhase]         = useState(false);
+
+  // Edit phase inline
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [editPhaseName, setEditPhaseName]   = useState("");
+  const [editPhaseDate, setEditPhaseDate]   = useState("");
+  const [editPhaseModel, setEditPhaseModel] = useState("");
+  const [savingPhase, setSavingPhase]       = useState(false);
 
   // Hydrate local state from SWR on first load
   useEffect(() => {
@@ -121,6 +128,56 @@ export default function AdminProjectDetailPage() {
       setMsTitle(""); setMsDueDate(""); setMsDesc(""); setMsStageId(""); setShowMsForm(false);
     }
     setAddingMs(false);
+  }
+
+  function startEditPhase(phase: Phase) {
+    setEditingPhaseId(phase.id);
+    setEditPhaseName(phase.name);
+    setEditPhaseDate(new Date(phase.capturedAt).toISOString().split("T")[0]);
+    setEditPhaseModel(phase.modelPath ?? "");
+  }
+
+  async function savePhase(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingPhaseId) return;
+    setSavingPhase(true);
+    const res = await fetch(`/api/projects/${id}/phases/${editingPhaseId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: editPhaseName.trim(),
+        capturedAt: editPhaseDate,
+        modelPath: editPhaseModel.trim() || null,
+      }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setProject((prev) => prev
+        ? { ...prev, phases: (prev.phases ?? []).map((p) => p.id === editingPhaseId ? updated : p) }
+        : prev
+      );
+      if (selectedPhase?.id === editingPhaseId) setSelectedPhase(updated);
+      mutate();
+    }
+    setEditingPhaseId(null);
+    setSavingPhase(false);
+  }
+
+  async function deletePhase(phaseId: string) {
+    if (!confirm("Delete this phase? The 3D model data will be lost.")) return;
+    const res = await fetch(`/api/projects/${id}/phases/${phaseId}`, { method: "DELETE" });
+    if (res.ok) {
+      setProject((prev) => {
+        if (!prev) return prev;
+        const remaining = (prev.phases ?? []).filter((p) => p.id !== phaseId);
+        return { ...prev, phases: remaining };
+      });
+      if (selectedPhase?.id === phaseId) {
+        const remaining = (project?.phases ?? []).filter((p) => p.id !== phaseId);
+        setSelectedPhase(remaining.length > 0 ? remaining[remaining.length - 1] : null);
+      }
+      mutate();
+    }
   }
 
   async function addPhase(e: React.FormEvent) {
@@ -260,20 +317,65 @@ export default function AdminProjectDetailPage() {
               <CardTitle className="text-base">3D Construction Model</CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-slate-400">View phase:</span>
-                {phases.map((phase) => (
-                  <button
-                    key={phase.id}
-                    onClick={() => setSelectedPhase(phase)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all border ${
-                      selectedPhase?.id === phase.id
-                        ? "bg-aeromine-600 text-white border-aeromine-600 shadow-sm"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
-                    }`}
-                  >
-                    {phase.name}
-                    <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
-                  </button>
-                ))}
+                {phases.map((phase) =>
+                  editingPhaseId === phase.id ? (
+                    <form key={phase.id} onSubmit={savePhase} className="flex items-center gap-1.5 flex-wrap">
+                      <input
+                        value={editPhaseName}
+                        onChange={(e) => setEditPhaseName(e.target.value)}
+                        required
+                        className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs w-24 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                      />
+                      <input
+                        type="date"
+                        value={editPhaseDate}
+                        onChange={(e) => setEditPhaseDate(e.target.value)}
+                        required
+                        className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                      />
+                      <input
+                        value={editPhaseModel}
+                        onChange={(e) => setEditPhaseModel(e.target.value)}
+                        placeholder="/models/…/scene.gltf"
+                        className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs font-mono w-48 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                      />
+                      <button type="submit" disabled={savingPhase} className="h-6 w-6 flex items-center justify-center rounded-md bg-aeromine-600 text-white hover:bg-aeromine-700 disabled:opacity-50">
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => setEditingPhaseId(null)} className="h-6 w-6 flex items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:text-slate-600">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  ) : (
+                    <div key={phase.id} className="flex items-center gap-0.5">
+                      <button
+                        onClick={() => setSelectedPhase(phase)}
+                        className={`rounded-l-lg px-3 py-1.5 text-xs font-semibold transition-all border-y border-l ${
+                          selectedPhase?.id === phase.id
+                            ? "bg-aeromine-600 text-white border-aeromine-600 shadow-sm"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
+                        }`}
+                      >
+                        {phase.name}
+                        <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
+                      </button>
+                      <button
+                        onClick={() => startEditPhase(phase)}
+                        title="Edit phase"
+                        className="px-1.5 py-1.5 border-y border-slate-200 text-slate-400 hover:text-aeromine-600 hover:bg-aeromine-50 transition-colors text-xs"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => deletePhase(phase.id)}
+                        title="Delete phase"
+                        className="px-1.5 py-1.5 rounded-r-lg border border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors text-xs"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )
+                )}
                 <button
                   onClick={() => { setPhaseName(`Phase ${phases.length + 1}`); /* scroll to form */ }}
                   className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-aeromine-400 hover:text-aeromine-600 transition-all"
