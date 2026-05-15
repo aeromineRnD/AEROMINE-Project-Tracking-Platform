@@ -51,16 +51,19 @@ export default function ClientProjectDetailPage() {
   const milestones = (project as any).milestones ?? [];
   const statusInfo = STATUS_LABELS[project.status];
 
-  // Stage rows: from selected phase snapshot, or fall back to current stage values
-  const activeStages: PhaseStageSnapshot[] = selectedPhase
-    ? JSON.parse(selectedPhase.stageSnapshot)
-    : (project.stages ?? []).map((s) => ({ nameEn: s.nameEn, nameEl: s.nameEl, progress: s.progress }));
+  // Live stages — always current, used for Stage Progress bars and overall %
+  const liveStages = (project.stages ?? []).map((s) => ({
+    nameEn: s.nameEn, nameEl: s.nameEl, progress: s.progress,
+  }));
 
-  const overallProgress = selectedPhase
-    ? selectedPhase.overallProgress
-    : activeStages.length
-      ? Math.round(activeStages.reduce((s, st) => s + st.progress, 0) / activeStages.length)
-      : 0;
+  // Snapshot stages — used only for 3D viewer placeholder colouring
+  const snapshotStages: PhaseStageSnapshot[] = selectedPhase
+    ? JSON.parse(selectedPhase.stageSnapshot)
+    : liveStages;
+
+  const overallProgress = liveStages.length
+    ? Math.round(liveStages.reduce((s, st) => s + st.progress, 0) / liveStages.length)
+    : 0;
 
   return (
     <div className="space-y-5">
@@ -191,7 +194,7 @@ export default function ClientProjectDetailPage() {
                 <ModelViewer
                   stages={(project.stages ?? []).map((s, i) => ({
                     ...s,
-                    progress: activeStages[i]?.progress ?? s.progress,
+                    progress: snapshotStages[i]?.progress ?? s.progress,
                   }))}
                   modelUrl={selectedPhase?.modelPath ?? null}
                 />
@@ -205,7 +208,7 @@ export default function ClientProjectDetailPage() {
               <CardTitle className="text-base">Stage Progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5">
-              {activeStages.map((stage) => (
+              {liveStages.map((stage) => (
                 <div key={stage.nameEn} className="flex items-center gap-3">
                   <span className="w-36 flex-shrink-0 text-sm text-slate-600 truncate">
                     {stage.nameEn}
