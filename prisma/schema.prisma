@@ -24,6 +24,23 @@ model User {
   adminProjects  Project[]       @relation("AdminProjects")
   clientProjects ProjectClient[]
   updates        Update[]
+  notifications  Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
 }
 
 model Project {
@@ -39,12 +56,13 @@ model Project {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  admin      User            @relation("AdminProjects", fields: [adminId], references: [id])
-  stages     Stage[]
-  phases     Phase[]
-  clients    ProjectClient[]
-  updates    Update[]
-  milestones Milestone[]
+  admin         User            @relation("AdminProjects", fields: [adminId], references: [id])
+  stages        Stage[]
+  phases        Phase[]
+  clients       ProjectClient[]
+  updates       Update[]
+  milestones    Milestone[]
+  notifications Notification[]
 }
 
 // A Phase is a drone-capture snapshot of the whole site at a point in time.

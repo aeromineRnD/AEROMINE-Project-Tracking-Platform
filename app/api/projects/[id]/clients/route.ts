@@ -22,6 +22,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { projectId: params.id, clientId },
     include: { client: { select: { id: true, name: true, email: true } } },
   });
+
+  // Welcome notification for the newly assigned client
+  const project = await prisma.project.findUnique({ where: { id: params.id }, select: { name: true } });
+  if (project) {
+    await prisma.notification.create({
+      data: {
+        userId: clientId,
+        projectId: params.id,
+        title: `Welcome to ${project.name}`,
+        message: "You have been assigned to a new construction project. Log in to track progress.",
+      },
+    });
+  }
+
   return NextResponse.json(assignment, { status: 201 });
 }
 
