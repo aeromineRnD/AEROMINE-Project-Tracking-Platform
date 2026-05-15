@@ -11,6 +11,7 @@ import { AnimatedProgress } from "@/components/ui/AnimatedProgress";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
+import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import {
@@ -26,6 +27,7 @@ export default function ClientProjectDetailPage() {
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [requested3D, setRequested3D]     = useState(false);
   const [requesting3D, setRequesting3D]   = useState(false);
+  const [viewerMode, setViewerMode]       = useState<"photos" | "3d">("photos");
 
   useEffect(() => {
     if (project) {
@@ -33,6 +35,13 @@ export default function ClientProjectDetailPage() {
       if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
     }
   }, [project?.id]);
+
+  useEffect(() => {
+    if (selectedPhase) {
+      const photos: string[] = selectedPhase.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
+      setViewerMode(photos.length > 0 ? "photos" : "3d");
+    }
+  }, [selectedPhase?.id]);
 
   async function request3D() {
     setRequesting3D(true);
@@ -190,13 +199,43 @@ export default function ClientProjectDetailPage() {
                 )}
               </CardHeader>
               <CardContent className="p-0">
-                <ModelViewer
-                  stages={(project.stages ?? []).map((s, i) => ({
-                    ...s,
-                    progress: snapshotStages[i]?.progress ?? s.progress,
-                  }))}
-                  modelUrl={selectedPhase?.modelPath ?? null}
-                />
+                {(() => {
+                  const photos: string[] = selectedPhase?.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
+                  const hasPhotos = photos.length > 0;
+                  const hasModel  = !!selectedPhase?.modelPath;
+                  return (
+                    <>
+                      {hasPhotos && hasModel && (
+                        <div className="flex gap-1 px-4 pt-3">
+                          {(["photos", "3d"] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              onClick={() => setViewerMode(mode)}
+                              className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
+                                viewerMode === mode
+                                  ? "bg-aeromine-600 text-white border-aeromine-600"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
+                              }`}
+                            >
+                              {mode === "photos" ? "Photos" : "3D Model"}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {hasPhotos && (!hasModel || viewerMode === "photos") ? (
+                        <PhasePhotoGallery photos={photos} />
+                      ) : (
+                        <ModelViewer
+                          stages={(project.stages ?? []).map((s, i) => ({
+                            ...s,
+                            progress: snapshotStages[i]?.progress ?? s.progress,
+                          }))}
+                          modelUrl={selectedPhase?.modelPath ?? null}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}

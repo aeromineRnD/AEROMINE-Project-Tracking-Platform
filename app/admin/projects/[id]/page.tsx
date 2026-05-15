@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { StageProgressChartDynamic as StageProgressChart } from "@/components/ch
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
+import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
@@ -51,7 +52,17 @@ export default function AdminProjectDetailPage() {
   const [editPhaseName, setEditPhaseName]   = useState("");
   const [editPhaseDate, setEditPhaseDate]   = useState("");
   const [editPhaseModel, setEditPhaseModel] = useState("");
+  const [editPhasePhotos, setEditPhasePhotos] = useState<string[]>([]);
   const [savingPhase, setSavingPhase]       = useState(false);
+
+  // Phase photo upload (shared for add + edit)
+  const [phasePhotos, setPhasePhotos]           = useState<string[]>([]);
+  const [uploadingPhasePhoto, setUploadingPhasePhoto] = useState(false);
+  const phasePhotoRef     = useRef<HTMLInputElement>(null);
+  const editPhasePhotoRef = useRef<HTMLInputElement>(null);
+
+  // Viewer mode toggle (when phase has both photos and 3D)
+  const [viewerMode, setViewerMode] = useState<"photos" | "3d">("photos");
 
   // Hydrate local state from SWR on first load
   useEffect(() => {
@@ -61,6 +72,34 @@ export default function AdminProjectDetailPage() {
       if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
     }
   }, [swrProject]);
+
+  useEffect(() => {
+    if (selectedPhase) {
+      const photos: string[] = selectedPhase.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
+      setViewerMode(photos.length > 0 ? "photos" : "3d");
+    }
+  }, [selectedPhase?.id]);
+
+  async function uploadPhasePhotos(
+    files: FileList | null,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    inputRef: React.RefObject<HTMLInputElement | null>,
+  ) {
+    if (!files?.length) return;
+    setUploadingPhasePhoto(true);
+    for (const file of Array.from(files)) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("category", "phases");
+      const res = await fetch("/api/uploads", { method: "POST", body: fd });
+      if (res.ok) {
+        const { url } = await res.json();
+        setter((prev) => [...prev, url]);
+      }
+    }
+    if (inputRef.current) inputRef.current.value = "";
+    setUploadingPhasePhoto(false);
+  }
 
   async function updateStageProgress(stageId: string, progress: number) {
     await fetch(`/api/projects/${id}/stages`, {
@@ -170,6 +209,7 @@ export default function AdminProjectDetailPage() {
     setEditPhaseName(phase.name);
     setEditPhaseDate(new Date(phase.capturedAt).toISOString().split("T")[0]);
     setEditPhaseModel(phase.modelPath ?? "");
+    setEditPhasePhotos(phase.photoUrls ? JSON.parse(phase.photoUrls) : []);
   }
 
   async function savePhase(e: React.FormEvent) {
@@ -183,6 +223,7 @@ export default function AdminProjectDetailPage() {
         name: editPhaseName.trim(),
         capturedAt: editPhaseDate,
         modelPath: editPhaseModel.trim() || null,
+        photoUrls: editPhasePhotos,
       }),
     });
     if (res.ok) {
@@ -235,6 +276,7 @@ export default function AdminProjectDetailPage() {
         capturedAt: phaseCapturedAt,
         overallProgress,
         modelPath: phaseModelPath.trim() || null,
+        photoUrls: phasePhotos,
         stageSnapshot,
       }),
     });
@@ -250,6 +292,7 @@ export default function AdminProjectDetailPage() {
       setPhaseName(`Phase ${((project?.phases ?? []).length) + 2}`);
       setPhaseCapturedAt(new Date().toISOString().split("T")[0]);
       setPhaseModelPath("");
+      setPhasePhotos([]);
     }
     setAddingPhase(false);
   }
@@ -330,7 +373,7 @@ export default function AdminProjectDetailPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Model path <span className="text-slate-400 font-normal">(e.g. /models/Phase_1/scene.gltf)</span>
+                  {t("modelPath")} <span className="text-slate-400 font-normal">(e.g. /models/Phase_1/scene.gltf)</span>
                 </label>
                 <input
                   value={phaseModelPath}
@@ -339,7 +382,29 @@ export default function AdminProjectDetailPage() {
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
                 />
               </div>
-              <Button type="submit" size="sm" disabled={addingPhase}>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Photos</label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {phasePhotos.map((url, i) => (
+                    <div key={i} className="relative flex-shrink-0">
+                      <img src={url} alt="" className="h-10 w-14 object-cover rounded border border-slate-200" />
+                      <button type="button" onClick={() => setPhasePhotos((p) => p.filter((_, j) => j !== i))}
+                        className="absolute -top-1 -right-1 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-red-500 text-white">
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <input ref={phasePhotoRef} type="file" accept="image/*" multiple className="hidden"
+                    onChange={(e) => uploadPhasePhotos(e.target.files, setPhasePhotos, phasePhotoRef)} />
+                  <button type="button" onClick={() => phasePhotoRef.current?.click()}
+                    disabled={uploadingPhasePhoto}
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500 hover:border-aeromine-400 hover:text-aeromine-600 disabled:opacity-50 transition-colors">
+                    <Camera className="h-4 w-4" />
+                    {uploadingPhasePhoto ? "Uploading…" : "Add photos"}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" size="sm" disabled={addingPhase || uploadingPhasePhoto}>
                 {addingPhase ? t("adding") : t("addPhase")}
               </Button>
             </form>
@@ -374,6 +439,23 @@ export default function AdminProjectDetailPage() {
                         placeholder="/models/…/scene.gltf"
                         className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs font-mono w-48 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
                       />
+                      {/* Photo thumbnails */}
+                      {editPhasePhotos.map((url, i) => (
+                        <div key={i} className="relative flex-shrink-0">
+                          <img src={url} alt="" className="h-7 w-10 object-cover rounded border border-slate-200" />
+                          <button type="button" onClick={() => setEditPhasePhotos((p) => p.filter((_, j) => j !== i))}
+                            className="absolute -top-1 -right-1 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-red-500 text-white">
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <input ref={editPhasePhotoRef} type="file" accept="image/*" multiple className="hidden"
+                        onChange={(e) => uploadPhasePhotos(e.target.files, setEditPhasePhotos, editPhasePhotoRef)} />
+                      <button type="button" onClick={() => editPhasePhotoRef.current?.click()}
+                        disabled={uploadingPhasePhoto}
+                        className="h-6 px-2 flex items-center gap-1 rounded-md border border-slate-200 text-slate-400 hover:text-aeromine-600 hover:border-aeromine-400 disabled:opacity-50 transition-colors text-[10px]">
+                        <Camera className="h-3 w-3" />
+                      </button>
                       <button type="submit" disabled={savingPhase} className="h-6 w-6 flex items-center justify-center rounded-md bg-aeromine-600 text-white hover:bg-aeromine-700 disabled:opacity-50">
                         <Check className="h-3.5 w-3.5" />
                       </button>
@@ -426,7 +508,38 @@ export default function AdminProjectDetailPage() {
             )}
           </CardHeader>
           <CardContent className="p-0">
-            <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
+            {(() => {
+              const photos: string[] = selectedPhase?.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
+              const hasPhotos = photos.length > 0;
+              const hasModel  = !!selectedPhase?.modelPath;
+
+              return (
+                <>
+                  {hasPhotos && hasModel && (
+                    <div className="flex gap-1 px-4 pt-3">
+                      {(["photos", "3d"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setViewerMode(mode)}
+                          className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
+                            viewerMode === mode
+                              ? "bg-aeromine-600 text-white border-aeromine-600"
+                              : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
+                          }`}
+                        >
+                          {mode === "photos" ? "Photos" : "3D Model"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {hasPhotos && (!hasModel || viewerMode === "photos") ? (
+                    <PhasePhotoGallery photos={photos} />
+                  ) : (
+                    <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
+                  )}
+                </>
+              );
+            })()}
           </CardContent>
           {/* Add another phase form */}
           <div className="border-t px-5 py-4 bg-slate-50">
@@ -459,7 +572,29 @@ export default function AdminProjectDetailPage() {
                   className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
                 />
               </div>
-              <Button type="submit" size="sm" disabled={addingPhase}>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Photos</label>
+                <div className="flex items-center gap-1.5">
+                  {phasePhotos.map((url, i) => (
+                    <div key={i} className="relative flex-shrink-0">
+                      <img src={url} alt="" className="h-8 w-11 object-cover rounded border border-slate-200" />
+                      <button type="button" onClick={() => setPhasePhotos((p) => p.filter((_, j) => j !== i))}
+                        className="absolute -top-1 -right-1 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-red-500 text-white">
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <input ref={phasePhotoRef} type="file" accept="image/*" multiple className="hidden"
+                    onChange={(e) => uploadPhasePhotos(e.target.files, setPhasePhotos, phasePhotoRef)} />
+                  <button type="button" onClick={() => phasePhotoRef.current?.click()}
+                    disabled={uploadingPhasePhoto}
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-500 hover:border-aeromine-400 hover:text-aeromine-600 disabled:opacity-50 transition-colors">
+                    <Camera className="h-3.5 w-3.5" />
+                    {uploadingPhasePhoto ? "Uploading…" : "Add photos"}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" size="sm" disabled={addingPhase || uploadingPhasePhoto}>
                 {addingPhase ? t("adding") : t("addPhase")}
               </Button>
             </form>

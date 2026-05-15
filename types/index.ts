@@ -38,6 +38,7 @@ export interface Phase {
   capturedAt: string;
   overallProgress: number;
   modelPath?: string | null;
+  photoUrls?: string | null; // JSON string — parse with JSON.parse()
   stageSnapshot: string; // JSON string — parse with JSON.parse()
   createdAt: string;
 }

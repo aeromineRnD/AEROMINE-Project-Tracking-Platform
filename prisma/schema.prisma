@@ -77,6 +77,7 @@ model Phase {
   capturedAt     DateTime
   overallProgress Int     @default(0)
   modelPath      String?
+  photoUrls      String?  // JSON: ["https://...jpg", ...]
   stageSnapshot  String   // JSON: [{nameEn, nameEl, progress}]
   createdAt      DateTime @default(now())
 

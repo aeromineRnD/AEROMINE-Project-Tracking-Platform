@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (error) return error;
 
   const body = await req.json();
-  const { name, order, capturedAt, overallProgress, modelPath, stageSnapshot } = body;
+  const { name, order, capturedAt, overallProgress, modelPath, photoUrls, stageSnapshot } = body;
 
   const phase = await prisma.phase.create({
     data: {
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       capturedAt: new Date(capturedAt),
       overallProgress: overallProgress ?? 0,
       modelPath: modelPath ?? null,
+      photoUrls: photoUrls?.length ? JSON.stringify(photoUrls) : null,
       stageSnapshot: JSON.stringify(stageSnapshot),
     },
   });
