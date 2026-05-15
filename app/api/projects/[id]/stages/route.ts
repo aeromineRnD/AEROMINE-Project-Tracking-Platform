@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireProjectAccess, requireProjectEdit } from "@/lib/apiAuth";
+import { notifyProjectClients } from "@/lib/notify";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireProjectAccess(req, params.id);
@@ -123,5 +124,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   });
 
   await syncProjectStatus(params.id, body.stageId);
+
+  if (body.progress !== undefined) {
+    await notifyProjectClients(
+      params.id,
+      "Stage progress updated",
+      `${stageOwned.nameEn} is now at ${body.progress}%.`,
+    );
+  }
+
   return NextResponse.json(updated);
 }
