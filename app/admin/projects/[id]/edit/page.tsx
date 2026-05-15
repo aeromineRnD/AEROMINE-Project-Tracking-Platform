@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Search, UserPlus, X } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Search, UserPlus, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProject } from "@/lib/hooks/useProjects";
@@ -20,23 +21,52 @@ export default function EditProjectPage() {
   const { project, mutate } = useProject(id);
 
   // ── Project details form ────────────────────────────────────────────────
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [uploading, setUploading]       = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl]         = useState("");
+  const fileInputRef                    = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: "", location: "", startDate: "", estimatedEnd: "",
-    status: "IN_PROGRESS", coverImage: "", description: "",
+    status: "IN_PROGRESS", description: "",
   });
 
   useEffect(() => {
-    if (project) setForm({
-      name:         project.name,
-      location:     project.location,
-      startDate:    project.startDate.split("T")[0],
-      estimatedEnd: project.estimatedEnd.split("T")[0],
-      status:       project.status,
-      coverImage:   project.coverImage ?? "",
-      description:  project.description ?? "",
-    });
+    if (project) {
+      setForm({
+        name:         project.name,
+        location:     project.location,
+        startDate:    project.startDate.split("T")[0],
+        estimatedEnd: project.estimatedEnd.split("T")[0],
+        status:       project.status,
+        description:  project.description ?? "",
+      });
+      // Show existing cover image as preview
+      if (project.coverImage) {
+        setCoverPreview(project.coverImage);
+        setCoverUrl(project.coverImage);
+      }
+    }
   }, [project?.id]);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverPreview(URL.createObjectURL(file));
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("category", "covers");
+    const res = await fetch("/api/uploads", { method: "POST", body: fd });
+    if (res.ok) {
+      const { url } = await res.json();
+      setCoverUrl(url);
+    } else {
+      setCoverPreview(coverUrl || null);
+    }
+    setUploading(false);
+  }
 
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -48,7 +78,7 @@ export default function EditProjectPage() {
     await fetch(`/api/projects/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, coverImage: coverUrl || null }),
     });
     router.push(`/admin/projects/${id}`);
   }
@@ -189,7 +219,6 @@ export default function EditProjectPage() {
               ["location",     "Location",             "text"],
               ["startDate",    "Start Date",           "date"],
               ["estimatedEnd", "Estimated Completion", "date"],
-              ["coverImage",   "Cover Image URL",      "url"],
             ] as [keyof typeof form, string, string][]).map(([key, label, type]) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
@@ -197,6 +226,41 @@ export default function EditProjectPage() {
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500" />
               </div>
             ))}
+
+            {/* Cover Image */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Cover Image</label>
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+              {coverPreview ? (
+                <div className="relative">
+                  <div className="relative h-48 w-full rounded-lg overflow-hidden border border-slate-200">
+                    <Image src={coverPreview} alt="Cover preview" fill className="object-cover" unoptimized />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setCoverPreview(null); setCoverUrl(""); }}
+                    className="absolute top-2 right-2 h-6 w-6 bg-white rounded-full flex items-center justify-center shadow hover:bg-red-50 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5 text-slate-600" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-36 rounded-lg border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-aeromine-400 hover:text-aeromine-500 transition-colors"
+                >
+                  <ImageIcon className="h-8 w-8" />
+                  <span className="text-sm font-medium">Click to upload cover image</span>
+                  <span className="text-xs">JPG, PNG or WebP</span>
+                </button>
+              )}
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
               <select value={form.status} onChange={set("status")}
