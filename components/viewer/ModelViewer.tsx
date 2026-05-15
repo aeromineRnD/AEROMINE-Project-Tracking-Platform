@@ -63,7 +63,7 @@ export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
   const placeholder = <PlaceholderBuilding stages={stages} />;
 
   return (
-    <div className="relative w-full h-[420px] bg-[#0f172a]">
+    <div className="relative w-full h-[280px] md:h-[420px] bg-[#0f172a]">
       <p className="absolute bottom-3 right-3 z-10 text-[11px] text-slate-500 pointer-events-none">
         Drag to rotate · Scroll to zoom
       </p>

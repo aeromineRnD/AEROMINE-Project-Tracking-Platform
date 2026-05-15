@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, LogOut, Settings, ChevronDown } from "lucide-react";
+import { Bell, LogOut, Settings, ChevronDown, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import useSWR from "swr";
@@ -73,8 +73,13 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-white px-6 z-30 relative">
-      <div />
+    <header className="flex h-14 items-center justify-between border-b bg-white px-4 md:px-6 z-30 relative">
+      {/* Logo — visible only on mobile (sidebar hidden) */}
+      <div className="flex md:hidden items-center gap-2">
+        <Building2 className="h-5 w-5 text-aeromine-600" />
+        <span className="text-sm font-bold text-slate-900">Aeromine <span className="text-aeromine-600 font-light">SiteView</span></span>
+      </div>
+      <div className="hidden md:block" />
 
       <div className="flex items-center gap-3">
         {isAdmin && <RoleSwitcher />}
