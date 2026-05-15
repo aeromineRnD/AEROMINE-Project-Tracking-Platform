@@ -5,6 +5,7 @@ import { UserPlus, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import useSWR from "swr";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 interface Client {
   id: string;
@@ -22,6 +23,7 @@ export default function AdminClientsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
   const [saving, setSaving] = useState(false);
+  const t = useT();
 
   async function addClient(e: React.FormEvent) {
     e.preventDefault();
@@ -44,38 +46,38 @@ export default function AdminClientsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Clients</h1>
-          <p className="text-sm text-slate-500">{clients.length} clients</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t("clients")}</h1>
+          <p className="text-sm text-slate-500">{clients.length} {t("clients").toLowerCase()}</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
-          <UserPlus className="h-4 w-4" /> Add Client
+          <UserPlus className="h-4 w-4" /> {t("addClient")}
         </Button>
       </div>
 
       {showForm && (
         <Card>
-          <CardHeader><CardTitle>New Client</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("newClient")}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={addClient} className="flex flex-wrap gap-3 items-end">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t("name")}</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t("email")}</label>
                 <input type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} required
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500" />
               </div>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Create"}</Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button type="submit" disabled={saving}>{saving ? t("saving") : t("create")}</Button>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>{t("cancel")}</Button>
             </form>
           </CardContent>
         </Card>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-400">Loading…</p>
+        <p className="text-sm text-slate-400">{t("loading")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
@@ -93,9 +95,9 @@ export default function AdminClientsPage() {
                   </div>
                 </div>
                 <div className="mt-3 border-t pt-3">
-                  <p className="text-xs text-slate-400 mb-1">Projects</p>
+                  <p className="text-xs text-slate-400 mb-1">{t("projects")}</p>
                   {c.clientProjects.length === 0 ? (
-                    <p className="text-xs text-slate-400">No projects assigned</p>
+                    <p className="text-xs text-slate-400">{t("noProjectsAssigned")}</p>
                   ) : (
                     <div className="flex flex-wrap gap-1">
                       {c.clientProjects.map((cp) => (

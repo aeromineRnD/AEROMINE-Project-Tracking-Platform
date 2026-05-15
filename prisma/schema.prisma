@@ -16,6 +16,7 @@ model User {
   email     String   @unique
   name      String
   role      String   @default("CLIENT")
+  language  String   @default("en")
   password  String?
   avatarUrl String?
   createdAt DateTime @default(now())

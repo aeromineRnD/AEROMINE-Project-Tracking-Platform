@@ -7,14 +7,16 @@ import { StatusDonutDynamic as StatusDonut } from "@/components/charts/StatusDon
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { useT } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, type ProjectUpdate, type ProjectStatus } from "@/types";
 
-const statIcons = [FolderOpen, TrendingUp, CheckCircle, Clock];
-const statBgs   = ["bg-blue-50", "bg-amber-50", "bg-green-50", "bg-purple-50"];
+const statIcons  = [FolderOpen, TrendingUp, CheckCircle, Clock];
+const statBgs    = ["bg-blue-50", "bg-amber-50", "bg-green-50", "bg-purple-50"];
 const statColors = ["text-blue-600", "text-amber-600", "text-green-600", "text-purple-600"];
 
 export default function AdminDashboardPage() {
   const { projects, isLoading } = useProjects();
+  const t = useT();
 
   const inProgress  = projects.filter((p) => p.status === "IN_PROGRESS").length;
   const completed   = projects.filter((p) => p.status === "COMPLETED").length;
@@ -31,31 +33,30 @@ export default function AdminDashboardPage() {
     .slice(0, 5);
 
   const stats = [
-    { label: "Total Projects", value: projects.length },
-    { label: "In Progress",    value: inProgress },
-    { label: "Completed",      value: completed },
-    { label: "Avg Progress",   value: `${avgProgress}%` },
+    { labelKey: "totalProjects" as const, value: projects.length },
+    { labelKey: "inProgress"    as const, value: inProgress },
+    { labelKey: "completed"     as const, value: completed },
+    { labelKey: "avgProgress"   as const, value: `${avgProgress}%` },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-        <p className="text-sm text-slate-500">Overview of all projects and clients</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("adminDashboard")}</h1>
+        <p className="text-sm text-slate-500">{t("overviewAllProjectsClients")}</p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s, i) => {
           const Icon = statIcons[i];
           return (
-            <Card key={s.label}>
+            <Card key={s.labelKey}>
               <CardContent className="flex items-center gap-4 pt-6">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${statBgs[i]}`}>
                   <Icon className={`h-5 w-5 ${statColors[i]}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">{t(s.labelKey)}</p>
                   {isLoading
                     ? <Skeleton className="mt-1 h-7 w-12" />
                     : <p className="text-2xl font-bold text-slate-900">{s.value}</p>
@@ -68,9 +69,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Projects grid */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-base font-semibold text-slate-800">Active Projects</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-800">{t("activeProjects")}</h2>
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {[...Array(4)].map((_, i) => (
@@ -92,17 +92,13 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Right column */}
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Project Status</CardTitle></CardHeader>
-            <CardContent>
-              <StatusDonut counts={statusCounts} />
-            </CardContent>
+            <CardHeader><CardTitle>{t("projectStatus")}</CardTitle></CardHeader>
+            <CardContent><StatusDonut counts={statusCounts} /></CardContent>
           </Card>
-
           <Card>
-            <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("recentActivity")}</CardTitle></CardHeader>
             <CardContent>
               {isLoading
                 ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>

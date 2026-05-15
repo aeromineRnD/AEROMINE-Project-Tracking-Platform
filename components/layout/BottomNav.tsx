@@ -6,29 +6,32 @@ import { useSession } from "next-auth/react";
 import { LayoutDashboard, FolderOpen, Bell, Settings, Users, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRoleStore } from "@/lib/store/roleStore";
-
-const adminNav = [
-  { label: "Home",     href: "/admin/dashboard",    icon: LayoutDashboard },
-  { label: "Projects", href: "/admin/projects",     icon: FolderOpen },
-  { label: "New",      href: "/admin/projects/new", icon: PlusCircle },
-  { label: "Clients",  href: "/admin/clients",      icon: Users },
-  { label: "Settings", href: "/admin/settings",     icon: Settings },
-];
-
-const clientNav = [
-  { label: "Home",     href: "/client/dashboard", icon: LayoutDashboard },
-  { label: "Projects", href: "/client/projects",  icon: FolderOpen },
-  { label: "Updates",  href: "/client/updates",   icon: Bell },
-  { label: "Settings", href: "/client/settings",  icon: Settings },
-];
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export function BottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { viewMode } = useRoleStore();
+  const t = useT();
 
   const role     = session?.user?.role ?? "CLIENT";
   const isAdmin  = role === "ADMIN" || role === "SUPER_ADMIN";
+
+  const adminNav = [
+    { label: t("home"),     href: "/admin/dashboard",    icon: LayoutDashboard },
+    { label: t("projects"), href: "/admin/projects",     icon: FolderOpen },
+    { label: t("new"),      href: "/admin/projects/new", icon: PlusCircle },
+    { label: t("clients"),  href: "/admin/clients",      icon: Users },
+    { label: t("settings"), href: "/admin/settings",     icon: Settings },
+  ];
+
+  const clientNav = [
+    { label: t("home"),     href: "/client/dashboard", icon: LayoutDashboard },
+    { label: t("projects"), href: "/client/projects",  icon: FolderOpen },
+    { label: t("updates"),  href: "/client/updates",   icon: Bell },
+    { label: t("settings"), href: "/client/settings",  icon: Settings },
+  ];
+
   const navItems = isAdmin && viewMode === "admin" ? adminNav : clientNav;
 
   return (

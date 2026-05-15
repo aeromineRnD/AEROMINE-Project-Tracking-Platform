@@ -12,6 +12,7 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { useProject } from "@/lib/hooks/useProjects";
+import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   STATUS_LABELS, stageColor,
   type Phase, type PhaseStageSnapshot, type ProjectUpdate,
@@ -20,6 +21,8 @@ import {
 export default function ClientProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { project, isLoading } = useProject(id);
+  const t = useT();
+  const { locale } = useLanguage();
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [requested3D, setRequested3D]     = useState(false);
   const [requesting3D, setRequesting3D]   = useState(false);
@@ -41,7 +44,7 @@ export default function ClientProjectDetailPage() {
   if (isLoading || !project) {
     return (
       <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
-        Loading project…
+        {t("loading")}
       </div>
     );
   }
@@ -85,7 +88,7 @@ export default function ClientProjectDetailPage() {
                   : "delayed"
                 }
               >
-                {statusInfo.en}
+                {statusInfo[locale]}
               </Badge>
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-500">
@@ -111,7 +114,7 @@ export default function ClientProjectDetailPage() {
         {/* Big overall % — top right, matching the reference */}
         <div className="text-right flex-shrink-0">
           <p className="text-4xl font-bold text-aeromine-600 leading-none">{overallProgress}%</p>
-          <p className="text-[11px] text-slate-400 mt-1 uppercase tracking-wider">Overall Progress</p>
+          <p className="text-[11px] text-slate-400 mt-1 uppercase tracking-wider">{t("overallProgress")}</p>
         </div>
       </div>
 
@@ -125,7 +128,7 @@ export default function ClientProjectDetailPage() {
               <CardHeader className="border-b">
                 <div className="flex items-center gap-2">
                   <Box className="h-5 w-5 text-aeromine-400" />
-                  <CardTitle className="text-base">3D Construction Model</CardTitle>
+                  <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="py-8 flex flex-col items-center text-center gap-4">
@@ -133,10 +136,8 @@ export default function ClientProjectDetailPage() {
                   <>
                     <CheckCircle className="h-10 w-10 text-green-500" />
                     <div>
-                      <p className="font-semibold text-slate-800">Request sent</p>
-                      <p className="text-sm text-slate-500 mt-1">
-                        Your project manager has been notified. The 3D model will appear here once it's ready.
-                      </p>
+                      <p className="font-semibold text-slate-800">{t("requestSent")}</p>
+                      <p className="text-sm text-slate-500 mt-1">{t("projectManagerNotified")}</p>
                     </div>
                   </>
                 ) : (
@@ -145,17 +146,15 @@ export default function ClientProjectDetailPage() {
                       <Box className="h-7 w-7 text-aeromine-400" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800">No 3D model yet</p>
-                      <p className="text-sm text-slate-500 mt-1 max-w-xs">
-                        A drone walkthrough of your site can be added on request. Would you like one?
-                      </p>
+                      <p className="font-semibold text-slate-800">{t("no3DModelYet")}</p>
+                      <p className="text-sm text-slate-500 mt-1 max-w-xs">{t("droneWalkthroughInfo")}</p>
                     </div>
                     <button
                       onClick={request3D}
                       disabled={requesting3D}
                       className="rounded-lg bg-aeromine-600 hover:bg-aeromine-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-medium transition-colors"
                     >
-                      {requesting3D ? "Sending request…" : "Request 3D Walkthrough"}
+                      {requesting3D ? t("sendingRequest") : t("request3DWalkthrough")}
                     </button>
                   </>
                 )}
@@ -165,9 +164,9 @@ export default function ClientProjectDetailPage() {
             <Card className="overflow-hidden">
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <CardTitle className="text-base">3D Construction Model</CardTitle>
+                  <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-slate-400">View phase:</span>
+                    <span className="text-xs text-slate-400">{t("viewPhase")}</span>
                     {phases.map((phase) => (
                       <button
                         key={phase.id}
@@ -186,7 +185,7 @@ export default function ClientProjectDetailPage() {
                 </div>
                 {selectedPhase && (
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
+                    {t("droneCapture", { date: format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy") })}
                   </p>
                 )}
               </CardHeader>
@@ -205,13 +204,13 @@ export default function ClientProjectDetailPage() {
           {/* Stage Progress bars */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Stage Progress</CardTitle>
+              <CardTitle className="text-base">{t("stageProgress")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5">
               {liveStages.map((stage) => (
                 <div key={stage.nameEn} className="flex items-center gap-3">
                   <span className="w-36 flex-shrink-0 text-sm text-slate-600 truncate">
-                    {stage.nameEn}
+                    {locale === "el" ? stage.nameEl : stage.nameEn}
                   </span>
                   <AnimatedProgress
                     value={stage.progress}
@@ -230,17 +229,17 @@ export default function ClientProjectDetailPage() {
           {/* Overall Completion bar */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Overall Completion</CardTitle>
+              <CardTitle className="text-base">{t("overallCompletion")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-slate-500">Progress</span>
+                <span className="text-slate-500">{t("progress")}</span>
                 <span className="font-bold text-slate-900">{overallProgress}%</span>
               </div>
               <AnimatedProgress value={overallProgress} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>Started {format(new Date(project.startDate), "MMM d, yyyy")}</span>
-                <span>Target {format(new Date(project.estimatedEnd), "MMM d, yyyy")}</span>
+                <span>{t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+                <span>{t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
               </div>
             </CardContent>
           </Card>
@@ -250,7 +249,7 @@ export default function ClientProjectDetailPage() {
         <div className="space-y-5">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Project Updates</CardTitle>
+              <CardTitle className="text-base">{t("projectUpdates")}</CardTitle>
             </CardHeader>
             <CardContent>
               <UpdateFeed updates={updates} />
@@ -259,7 +258,7 @@ export default function ClientProjectDetailPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Milestones</CardTitle>
+              <CardTitle className="text-base">{t("milestones")}</CardTitle>
             </CardHeader>
             <CardContent>
               <MilestoneTracker milestones={milestones} />

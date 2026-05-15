@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { useUpdates } from "@/lib/hooks/useProjects";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -20,6 +21,7 @@ interface ClientRequest {
 
 export default function AdminUpdatesPage() {
   const { updates, isLoading } = useUpdates();
+  const t = useT();
 
   const { data: notifData } = useSWR<{ notifications: ClientRequest[] }>(
     "/api/notifications",
@@ -34,8 +36,8 @@ export default function AdminUpdatesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">All Updates</h1>
-        <p className="text-sm text-slate-500">Activity across all projects</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("allUpdates")}</h1>
+        <p className="text-sm text-slate-500">{t("activityAcrossAllProjects")}</p>
       </div>
 
       {clientRequests.length > 0 && (
@@ -43,7 +45,7 @@ export default function AdminUpdatesPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Bell className="h-4 w-4 text-aeromine-500" />
-              Client Requests
+              {t("clientRequests")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -69,11 +71,11 @@ export default function AdminUpdatesPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Posted Updates</CardTitle>
+          <CardTitle className="text-base">{t("postedUpdates")}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-slate-400">{t("loading")}</p>
           ) : (
             <UpdateFeed updates={updates} />
           )}

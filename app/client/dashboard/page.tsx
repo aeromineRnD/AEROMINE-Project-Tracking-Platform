@@ -8,6 +8,7 @@ import { StatusDonutDynamic as StatusDonut } from "@/components/charts/StatusDon
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { useT } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, type ProjectUpdate, type ProjectStatus } from "@/types";
 
 const statIcons  = [FolderOpen, TrendingUp, CheckCircle, Clock];
@@ -17,6 +18,7 @@ const statColors = ["text-blue-600", "text-amber-600", "text-green-600", "text-p
 export default function ClientDashboardPage() {
   const { data: session } = useSession();
   const { projects, isLoading } = useProjects();
+  const t = useT();
 
   const inProgress  = projects.filter((p) => p.status === "IN_PROGRESS").length;
   const completed   = projects.filter((p) => p.status === "COMPLETED").length;
@@ -35,33 +37,33 @@ export default function ClientDashboardPage() {
     .sort((a: ProjectUpdate, b: ProjectUpdate) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  const stats = [
-    { label: "Total Projects", value: projects.length },
-    { label: "In Progress",    value: inProgress },
-    { label: "Completed",      value: completed },
-    { label: "Avg Progress",   value: `${avgProgress}%` },
-  ];
-
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+
+  const stats = [
+    { labelKey: "totalProjects" as const, value: projects.length },
+    { labelKey: "inProgress"    as const, value: inProgress },
+    { labelKey: "completed"     as const, value: completed },
+    { labelKey: "avgProgress"   as const, value: `${avgProgress}%` },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Welcome back, {firstName}</h1>
-        <p className="text-sm text-slate-500">Track your construction progress</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("welcomeBack", { firstName })}</h1>
+        <p className="text-sm text-slate-500">{t("trackConstructionProgress")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s, i) => {
           const Icon = statIcons[i];
           return (
-            <Card key={s.label}>
+            <Card key={s.labelKey}>
               <CardContent className="flex items-center gap-4 pt-6">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${statBgs[i]}`}>
                   <Icon className={`h-5 w-5 ${statColors[i]}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">{t(s.labelKey)}</p>
                   {isLoading
                     ? <Skeleton className="mt-1 h-7 w-12" />
                     : <p className="text-2xl font-bold text-slate-900">{s.value}</p>
@@ -75,7 +77,7 @@ export default function ClientDashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-base font-semibold text-slate-800">Active Projects</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-800">{t("activeProjects")}</h2>
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {[...Array(2)].map((_, i) => (
@@ -99,11 +101,11 @@ export default function ClientDashboardPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Project Status</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("projectStatus")}</CardTitle></CardHeader>
             <CardContent><StatusDonut counts={statusCounts} /></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("recentActivity")}</CardTitle></CardHeader>
             <CardContent>
               {isLoading
                 ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>

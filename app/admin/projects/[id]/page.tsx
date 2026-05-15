@@ -14,12 +14,15 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { useProject } from "@/lib/hooks/useProjects";
+import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { project: swrProject, isLoading, mutate } = useProject(id);
+  const t = useT();
+  const { locale } = useLanguage();
   const [project, setProject]             = useState<Project | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [postTitle, setPostTitle]         = useState("");
@@ -137,7 +140,7 @@ export default function AdminProjectDetailPage() {
   }
 
   async function deleteProject() {
-    if (!confirm("Delete this project? This cannot be undone.")) return;
+    if (!confirm(t("deleteProjectConfirm"))) return;
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
     router.push("/admin/projects");
   }
@@ -196,7 +199,7 @@ export default function AdminProjectDetailPage() {
   }
 
   async function deletePhase(phaseId: string) {
-    if (!confirm("Delete this phase? The 3D model data will be lost.")) return;
+    if (!confirm(t("deletePhaseConfirm"))) return;
     const res = await fetch(`/api/projects/${id}/phases/${phaseId}`, { method: "DELETE" });
     if (res.ok) {
       setProject((prev) => {
@@ -251,7 +254,7 @@ export default function AdminProjectDetailPage() {
     setAddingPhase(false);
   }
 
-  if (isLoading || !project) return <div className="text-sm text-slate-400">Loading…</div>;
+  if (isLoading || !project) return <div className="text-sm text-slate-400">{t("loading")}</div>;
 
   const stages: Stage[]         = project.stages ?? [];
   const phases: Phase[]         = project.phases ?? [];
@@ -272,13 +275,13 @@ export default function AdminProjectDetailPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
               <Badge variant={project.status === "IN_PROGRESS" ? "inprogress" : project.status === "COMPLETED" ? "completed" : "delayed"}>
-                {statusInfo.en}
+                {statusInfo[locale]}
               </Badge>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
               <span>📍 {project.location}</span>
-              <span>📅 Started {format(new Date(project.startDate), "MMM d, yyyy")}</span>
-              <span>🎯 Est. {format(new Date(project.estimatedEnd), "MMM d, yyyy")}</span>
+              <span>📅 {t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+              <span>🎯 {t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
             </div>
           </div>
         </div>
@@ -298,14 +301,14 @@ export default function AdminProjectDetailPage() {
           <CardHeader className="border-b">
             <div className="flex items-center gap-2">
               <Box className="h-5 w-5 text-aeromine-400" />
-              <CardTitle className="text-base">3D Construction Model</CardTitle>
+              <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="py-6">
             <form onSubmit={addPhase} className="space-y-3 max-w-md">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Phase name</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">{t("phaseName")}</label>
                   <input
                     value={phaseName}
                     onChange={(e) => setPhaseName(e.target.value)}
@@ -315,7 +318,7 @@ export default function AdminProjectDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Capture date</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">{t("captureDate")}</label>
                   <input
                     type="date"
                     value={phaseCapturedAt}
@@ -337,7 +340,7 @@ export default function AdminProjectDetailPage() {
                 />
               </div>
               <Button type="submit" size="sm" disabled={addingPhase}>
-                {addingPhase ? "Adding…" : "Add Phase"}
+                {addingPhase ? t("adding") : t("addPhase")}
               </Button>
             </form>
           </CardContent>
@@ -346,9 +349,9 @@ export default function AdminProjectDetailPage() {
         <Card className="overflow-hidden">
           <CardHeader className="pb-3 border-b">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <CardTitle className="text-base">3D Construction Model</CardTitle>
+              <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-400">View phase:</span>
+                <span className="text-xs text-slate-400">{t("viewPhase")}</span>
                 {phases.map((phase) =>
                   editingPhaseId === phase.id ? (
                     <form key={phase.id} onSubmit={savePhase} className="flex items-center gap-1.5 flex-wrap">
@@ -429,7 +432,7 @@ export default function AdminProjectDetailPage() {
           <div className="border-t px-5 py-4 bg-slate-50">
             <form onSubmit={addPhase} className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">New phase name</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">{t("newPhaseName")}</label>
                 <input
                   value={phaseName}
                   onChange={(e) => setPhaseName(e.target.value)}
@@ -438,7 +441,7 @@ export default function AdminProjectDetailPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Capture date</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">{t("captureDate")}</label>
                 <input
                   type="date"
                   value={phaseCapturedAt}
@@ -448,7 +451,7 @@ export default function AdminProjectDetailPage() {
                 />
               </div>
               <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Model path</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">{t("modelPath")}</label>
                 <input
                   value={phaseModelPath}
                   onChange={(e) => setPhaseModelPath(e.target.value)}
@@ -457,7 +460,7 @@ export default function AdminProjectDetailPage() {
                 />
               </div>
               <Button type="submit" size="sm" disabled={addingPhase}>
-                {addingPhase ? "Adding…" : "Add Phase"}
+                {addingPhase ? t("adding") : t("addPhase")}
               </Button>
             </form>
           </div>
@@ -468,11 +471,11 @@ export default function AdminProjectDetailPage() {
         {/* Stage Progress + sliders */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader><CardTitle>Stage Progress</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("stageProgress")}</CardTitle></CardHeader>
             <CardContent>
               <StageProgressChart stages={stages} />
               <div className="mt-6 space-y-3 border-t pt-4">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Update Stage Progress</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t("updateStageProgress")}</p>
                 {stages.map((s) => (
                   <div key={s.id} className="flex items-center gap-3">
                     <span className="w-40 truncate text-xs text-slate-600">{s.nameEn}</span>
@@ -491,7 +494,7 @@ export default function AdminProjectDetailPage() {
 
           {/* Overall Completion */}
           <Card>
-            <CardHeader><CardTitle>Overall Completion</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("overallCompletion")}</CardTitle></CardHeader>
             <CardContent>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-slate-500">Progress</span>
@@ -499,26 +502,26 @@ export default function AdminProjectDetailPage() {
               </div>
               <AnimatedProgress value={overall} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>Started {format(new Date(project.startDate), "MMM d, yyyy")}</span>
-                <span>Target {format(new Date(project.estimatedEnd), "MMM d, yyyy")}</span>
+                <span>{t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+                <span>{t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Post Update */}
           <Card>
-            <CardHeader><CardTitle>Post an Update</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("postAnUpdate")}</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={postUpdate} className="space-y-3">
                 <input
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
-                  placeholder="Update title"
+                  placeholder={t("updateTitlePlaceholder")}
                   value={postTitle}
                   onChange={(e) => setPostTitle(e.target.value)}
                 />
                 <textarea
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 resize-none"
-                  placeholder="Describe the progress…"
+                  placeholder={t("describeProgress")}
                   rows={3}
                   value={postContent}
                   onChange={(e) => setPostContent(e.target.value)}
@@ -559,7 +562,7 @@ export default function AdminProjectDetailPage() {
 
                 <div className="flex items-center gap-2">
                   <Button type="submit" size="sm" disabled={posting || uploading}>
-                    <Plus className="h-4 w-4" /> {posting ? "Posting…" : "Post Update"}
+                    <Plus className="h-4 w-4" /> {posting ? t("posting") : t("postUpdate")}
                   </Button>
                   <button
                     type="button"
@@ -568,7 +571,7 @@ export default function AdminProjectDetailPage() {
                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:border-aeromine-400 hover:text-aeromine-600 disabled:opacity-50 transition-colors"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
-                    {uploading ? "Uploading…" : "Attach files"}
+                    {uploading ? t("uploading") : t("attachFiles")}
                   </button>
                 </div>
               </form>
@@ -579,19 +582,19 @@ export default function AdminProjectDetailPage() {
         {/* Right sidebar */}
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Project Updates</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("projectUpdates")}</CardTitle></CardHeader>
             <CardContent><UpdateFeed updates={updates} /></CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Milestones</CardTitle>
+                <CardTitle>{t("milestones")}</CardTitle>
                 <button
                   onClick={() => setShowMsForm((v) => !v)}
                   className="text-xs text-aeromine-600 hover:text-aeromine-800 font-medium transition-colors"
                 >
-                  {showMsForm ? "Cancel" : "+ Add"}
+                  {showMsForm ? t("cancel") : t("add")}
                 </button>
               </div>
             </CardHeader>
@@ -599,12 +602,12 @@ export default function AdminProjectDetailPage() {
               {/* Prominent prompt when no milestones yet */}
               {milestones.length === 0 && !showMsForm && (
                 <div className="rounded-lg border-2 border-dashed border-slate-200 p-4 text-center">
-                  <p className="text-sm text-slate-500 mb-2">No milestones set yet.</p>
+                  <p className="text-sm text-slate-500 mb-2">{t("noMilestonesYet")}</p>
                   <button
                     onClick={() => setShowMsForm(true)}
                     className="text-xs font-semibold text-aeromine-600 hover:text-aeromine-800 transition-colors"
                   >
-                    + Add first milestone
+                    {t("addFirstMilestone")}
                   </button>
                 </div>
               )}
@@ -614,7 +617,7 @@ export default function AdminProjectDetailPage() {
                 <form onSubmit={addMilestone} className="space-y-2 rounded-lg border border-aeromine-200 bg-aeromine-50 p-3">
                   <input
                     required
-                    placeholder="Milestone title"
+                    placeholder={t("milestoneTitle")}
                     value={msTitle}
                     onChange={(e) => setMsTitle(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
@@ -632,13 +635,13 @@ export default function AdminProjectDetailPage() {
                     onChange={(e) => setMsStageId(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
                   >
-                    <option value="">No stage link (manual or project completion)</option>
+                    <option value="">{t("noStageLinkOption")}</option>
                     {stages.map((s) => (
                       <option key={s.id} value={s.id}>{s.nameEn}</option>
                     ))}
                   </select>
                   <textarea
-                    placeholder="Description (optional)"
+                    placeholder={t("descriptionOptional")}
                     value={msDesc}
                     onChange={(e) => setMsDesc(e.target.value)}
                     rows={2}
@@ -646,10 +649,10 @@ export default function AdminProjectDetailPage() {
                   />
                   <div className="flex gap-2">
                     <Button type="submit" size="sm" disabled={addingMs}>
-                      {addingMs ? "Saving…" : "Save Milestone"}
+                      {addingMs ? t("saving") : t("saveMilestone")}
                     </Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => setShowMsForm(false)}>
-                      Cancel
+                      {t("cancel")}
                     </Button>
                   </div>
                 </form>
@@ -660,10 +663,10 @@ export default function AdminProjectDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Assigned Clients</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("assignedClients")}</CardTitle></CardHeader>
             <CardContent>
               {(project.clients ?? []).length === 0 ? (
-                <p className="text-sm text-slate-400">No clients assigned.</p>
+                <p className="text-sm text-slate-400">{t("noClientsAssigned")}</p>
               ) : (
                 <div className="space-y-2">
                   {(project.clients ?? []).map((c: any) => (

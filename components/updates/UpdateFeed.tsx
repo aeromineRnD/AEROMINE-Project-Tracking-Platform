@@ -1,6 +1,9 @@
+"use client";
+
 import { Flag, Image as ImageIcon, FileText, Video, TrendingUp, Download, Presentation } from "lucide-react";
 import { format } from "date-fns";
 import type { ProjectUpdate } from "@/types";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const TYPE_ICONS = {
   TEXT:      FileText,
@@ -37,8 +40,10 @@ interface Props {
 }
 
 export function UpdateFeed({ updates }: Props) {
+  const t = useT();
+
   if (!updates.length) {
-    return <p className="text-sm text-slate-400 py-4">No updates yet.</p>;
+    return <p className="text-sm text-slate-400 py-4">{t("noUpdatesYet")}</p>;
   }
 
   return (

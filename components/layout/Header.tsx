@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, LogOut, Settings, ChevronDown, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useT } from "@/lib/i18n/LanguageContext";
 import useSWR from "swr";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { formatDistanceToNow } from "date-fns";
@@ -51,6 +52,7 @@ export function Header() {
   const notifications = data?.notifications ?? [];
   const unreadCount   = data?.unreadCount ?? 0;
 
+  const t            = useT();
   const role         = session?.user?.role ?? "CLIENT";
   const isAdmin      = role === "ADMIN" || role === "SUPER_ADMIN";
   const name         = session?.user?.name  ?? "";
@@ -102,17 +104,17 @@ export function Header() {
           {notifOpen && (
             <div className="absolute right-0 top-10 w-80 rounded-xl border bg-white shadow-xl z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b">
-                <p className="text-sm font-semibold text-slate-900">Notifications</p>
+                <p className="text-sm font-semibold text-slate-900">{t("notifications")}</p>
                 {unreadCount > 0 && (
                   <button onClick={markAllRead} className="text-xs text-aeromine-600 hover:text-aeromine-800 hover:underline transition-colors">
-                    Mark all read
+                    {t("markAllRead")}
                   </button>
                 )}
               </div>
 
               <div className="divide-y max-h-72 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="px-4 py-6 text-sm text-slate-400 text-center">No notifications yet</p>
+                  <p className="px-4 py-6 text-sm text-slate-400 text-center">{t("noNotificationsYet")}</p>
                 ) : (
                   notifications.map((n) => (
                     <button
@@ -158,7 +160,7 @@ export function Header() {
                 <p className="text-sm font-semibold text-slate-900 truncate">{name}</p>
                 <p className="text-xs text-slate-500 truncate">{email}</p>
                 <span className="mt-1 inline-block rounded-full bg-aeromine-100 px-2 py-0.5 text-[10px] font-semibold text-aeromine-700 uppercase tracking-wide">
-                  {isAdmin ? "Admin" : "Client"}
+                  {isAdmin ? t("admin") : t("client")}
                 </span>
               </div>
               <div className="py-1">
@@ -167,14 +169,14 @@ export function Header() {
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   <Settings className="h-4 w-4 text-slate-400" />
-                  Settings
+                  {t("settings")}
                 </button>
                 <button
                   onClick={handleLogout}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  Log out
+                  {t("logOut")}
                 </button>
               </div>
             </div>

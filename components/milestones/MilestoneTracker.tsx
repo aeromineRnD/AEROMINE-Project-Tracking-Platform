@@ -1,9 +1,12 @@
+"use client";
+
 import { CheckCircle2, Circle, Clock, Link2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Milestone } from "@/types";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 interface MilestoneWithStage extends Milestone {
-  stage?: { id: string; nameEn: string } | null;
+  stage?: { id: string; nameEn: string; nameEl?: string } | null;
 }
 
 interface Props {
@@ -12,8 +15,10 @@ interface Props {
 }
 
 export function MilestoneTracker({ milestones, onToggle }: Props) {
+  const t = useT();
+
   if (!milestones.length) {
-    return <p className="text-sm text-slate-400 py-4">No milestones set.</p>;
+    return <p className="text-sm text-slate-400 py-4">{t("noMilestonesSet")}</p>;
   }
 
   return (
@@ -46,11 +51,10 @@ export function MilestoneTracker({ milestones, onToggle }: Props) {
               <div className="flex items-center gap-1 text-[11px] text-slate-400">
                 <Clock className="h-3 w-3" />
                 {m.completed && m.completedAt
-                  ? `Completed ${format(new Date(m.completedAt), "MMM d, yyyy")}`
-                  : `Due ${format(new Date(m.dueDate), "MMM d, yyyy")}`}
+                  ? t("completedOn", { date: format(new Date(m.completedAt), "MMM d, yyyy") })
+                  : t("due", { date: format(new Date(m.dueDate), "MMM d, yyyy") })}
               </div>
 
-              {/* Stage link badge */}
               {m.stage && (
                 <div className="flex items-center gap-1 text-[11px] text-aeromine-600 bg-aeromine-50 rounded-full px-2 py-0.5 border border-aeromine-100">
                   <Link2 className="h-2.5 w-2.5" />

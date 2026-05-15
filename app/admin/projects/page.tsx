@@ -8,12 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { useT } from "@/lib/i18n/LanguageContext";
 import type { ProjectStatus } from "@/types";
 
 export default function AdminProjectsPage() {
   const { projects, isLoading: loading } = useProjects();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
+  const t = useT();
 
   const filtered = projects.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -22,25 +24,31 @@ export default function AdminProjectsPage() {
     return matchSearch && matchStatus;
   });
 
+  const statusLabels: Record<string, string> = {
+    ALL:         t("all"),
+    IN_PROGRESS: t("statusInProgress"),
+    COMPLETED:   t("statusCompleted"),
+    DELAYED:     t("statusDelayed"),
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">All Projects</h1>
-          <p className="text-sm text-slate-500">{projects.length} projects total</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t("allProjects")}</h1>
+          <p className="text-sm text-slate-500">{t("projectsTotal", { n: projects.length })}</p>
         </div>
         <Link href="/admin/projects/new">
-          <Button><PlusCircle className="h-4 w-4" /> New Project</Button>
+          <Button><PlusCircle className="h-4 w-4" /> {t("newProject")}</Button>
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
-            placeholder="Search projects…"
+            placeholder={t("searchProjects")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -55,7 +63,7 @@ export default function AdminProjectsPage() {
                 : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
             }`}
           >
-            {s === "ALL" ? "All" : s === "IN_PROGRESS" ? "In Progress" : s === "COMPLETED" ? "Completed" : "Delayed"}
+            {statusLabels[s]}
           </button>
         ))}
       </div>
@@ -71,7 +79,7 @@ export default function AdminProjectsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-slate-400">No projects match your filters.</p>
+        <p className="text-sm text-slate-400">{t("noProjectsMatchFilters")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
