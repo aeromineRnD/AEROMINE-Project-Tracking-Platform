@@ -83,6 +83,7 @@ export default function NewProjectPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.estimatedEnd <= form.startDate) return;
     setSaving(true);
     const res = await fetch("/api/projects", {
       method: "POST",
@@ -125,10 +126,8 @@ export default function NewProjectPage() {
           <CardHeader><CardTitle>{t("projectDetails")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {([
-              ["name",         t("projectName"),         "text", t("projectNamePlaceholder"),  true],
-              ["location",     t("location"),             "text", t("locationPlaceholder"),     true],
-              ["startDate",    t("startDate"),            "date", "",                           true],
-              ["estimatedEnd", t("estimatedCompletion"),  "date", "",                           true],
+              ["name",     t("projectName"), "text", t("projectNamePlaceholder"), true],
+              ["location", t("location"),    "text", t("locationPlaceholder"),    true],
             ] as [keyof typeof form, string, string, string, boolean][]).map(([key, label, type, placeholder, required]) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
@@ -136,6 +135,37 @@ export default function NewProjectPage() {
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500" />
               </div>
             ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t("startDate")}</label>
+                <input
+                  type="date"
+                  required
+                  value={form.startDate}
+                  onChange={set("startDate")}
+                  max={form.estimatedEnd || undefined}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t("estimatedCompletion")}</label>
+                <input
+                  type="date"
+                  required
+                  value={form.estimatedEnd}
+                  onChange={set("estimatedEnd")}
+                  min={form.startDate || undefined}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 ${
+                    form.startDate && form.estimatedEnd && form.estimatedEnd <= form.startDate
+                      ? "border-red-400 ring-1 ring-red-400"
+                      : "border-slate-200"
+                  }`}
+                />
+                {form.startDate && form.estimatedEnd && form.estimatedEnd <= form.startDate && (
+                  <p className="mt-1 text-xs text-red-500">Must be after the start date.</p>
+                )}
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t("description")}</label>
               <textarea value={form.description} onChange={set("description")} rows={3}
