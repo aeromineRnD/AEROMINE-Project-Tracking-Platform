@@ -61,12 +61,22 @@ export interface Project {
   coverImage?: string | null;
   description?: string | null;
   adminId: string;
+  contactEnabled: boolean;
   createdAt: string;
   updatedAt: string;
   stages?: Stage[];
   phases?: Phase[];
   admin?: User;
   clients?: { client: User }[];
+}
+
+export interface ProjectMessage {
+  id: string;
+  projectId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+  author: { name: string; role: string };
 }
 
 export interface ProjectUpdate {

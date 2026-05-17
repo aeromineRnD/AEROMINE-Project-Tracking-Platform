@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -13,6 +14,7 @@ import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
 import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
+import { ProjectMessageThread } from "@/components/messaging/ProjectMessageThread";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import {
@@ -22,6 +24,7 @@ import {
 
 export default function ClientProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { data: session } = useSession();
   const { project, isLoading } = useProject(id);
   const t = useT();
   const { locale } = useLanguage();
@@ -310,6 +313,15 @@ export default function ClientProjectDetailPage() {
             projectId={id}
             readOnly
           />
+
+          {session?.user?.id && (
+            <ProjectMessageThread
+              projectId={id}
+              currentUserId={session.user.id}
+              currentUserRole="CLIENT"
+              contactEnabled={project.contactEnabled ?? true}
+            />
+          )}
         </div>
       </div>
     </div>

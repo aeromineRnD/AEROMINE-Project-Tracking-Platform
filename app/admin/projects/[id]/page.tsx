@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera } from "lucide-react";
 import { format } from "date-fns";
@@ -15,17 +16,20 @@ import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
 import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
+import { ProjectMessageThread } from "@/components/messaging/ProjectMessageThread";
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
-import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate, type StageMaterial } from "@/types";
+import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
   const { project: swrProject, isLoading, mutate } = useProject(id);
   const t = useT();
   const { locale } = useLanguage();
   const [project, setProject]             = useState<Project | null>(null);
+  const [contactEnabled, setContactEnabled] = useState(true);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [postTitle, setPostTitle]         = useState("");
   const [postContent, setPostContent]     = useState("");
@@ -69,6 +73,7 @@ export default function AdminProjectDetailPage() {
   useEffect(() => {
     if (swrProject && !project) {
       setProject(swrProject);
+      setContactEnabled(swrProject.contactEnabled ?? true);
       const phases = swrProject.phases ?? [];
       if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
     }
@@ -834,6 +839,17 @@ export default function AdminProjectDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {session?.user?.id && (
+            <ProjectMessageThread
+              projectId={id}
+              currentUserId={session.user.id}
+              currentUserRole="ADMIN"
+              contactEnabled={contactEnabled}
+              isAdmin
+              onContactToggle={setContactEnabled}
+            />
+          )}
         </div>
       </div>
     </div>

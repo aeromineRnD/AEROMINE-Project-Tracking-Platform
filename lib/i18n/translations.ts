@@ -175,6 +175,16 @@ export const translations = {
     logoNote:                "Logo upload and white-labelling available in the production version.",
     notifyClientViews:       "Notify me when a client views their project",
     dailySummary:            "Daily summary of all project activity",
+
+    // Messaging
+    contactForm:             "Contact & Messages",
+    sendMessage:             "Send",
+    messagePlaceholder:      "Ask a question or leave a message…",
+    contactDisabled:         "The contact form is currently disabled for this project.",
+    enableContact:           "Enable contact form",
+    disableContact:          "Disable contact form",
+    noMessagesYet:           "No messages yet. Ask us anything.",
+    sending:                 "Sending…",
   },
 
   el: {
@@ -351,6 +361,16 @@ export const translations = {
     logoNote:                "Μεταφόρτωση λογοτύπου και white-labelling διαθέσιμα στην παραγωγή.",
     notifyClientViews:       "Ειδοποίηση όταν ο πελάτης δει το έργο του",
     dailySummary:            "Ημερήσια σύνοψη όλης της δραστηριότητας έργου",
+
+    // Messaging
+    contactForm:             "Επικοινωνία & Μηνύματα",
+    sendMessage:             "Αποστολή",
+    messagePlaceholder:      "Κάντε μια ερώτηση ή αφήστε ένα μήνυμα…",
+    contactDisabled:         "Η φόρμα επικοινωνίας είναι απενεργοποιημένη για αυτό το έργο.",
+    enableContact:           "Ενεργοποίηση φόρμας επικοινωνίας",
+    disableContact:          "Απενεργοποίηση φόρμας επικοινωνίας",
+    noMessagesYet:           "Δεν υπάρχουν μηνύματα ακόμα. Ρωτήστε μας οτιδήποτε.",
+    sending:                 "Αποστολή…",
   },
 } as const;
 
