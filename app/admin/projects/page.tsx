@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,13 +15,27 @@ export default function AdminProjectsPage() {
   const { projects, isLoading: loading } = useProjects();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">("ALL");
+  const [clientFilter, setClientFilter] = useState("ALL");
   const t = useT();
+
+  // Build unique client list from loaded projects
+  const allClients = useMemo(() => {
+    const map = new Map<string, string>();
+    projects.forEach((p) =>
+      (p as any).clients?.forEach((pc: any) => {
+        if (pc.client) map.set(pc.client.id, pc.client.name);
+      })
+    );
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [projects]);
 
   const filtered = projects.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.location.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "ALL" || p.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchClient = clientFilter === "ALL" ||
+      (p as any).clients?.some((pc: any) => pc.client?.id === clientFilter);
+    return matchSearch && matchStatus && matchClient;
   });
 
   const statusLabels: Record<string, string> = {
@@ -53,6 +67,22 @@ export default function AdminProjectsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        {/* Client filter */}
+        <div className="relative">
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          <select
+            value={clientFilter}
+            onChange={(e) => setClientFilter(e.target.value)}
+            className="appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+          >
+            <option value="ALL">All Clients</option>
+            {allClients.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
         {(["ALL", "IN_PROGRESS", "COMPLETED", "DELAYED"] as const).map((s) => (
           <button
             key={s}
