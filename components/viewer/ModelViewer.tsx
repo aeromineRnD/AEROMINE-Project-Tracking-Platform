@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, Component, type ReactNode } from "react";
+import { Suspense, Component, useEffect, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, useGLTF } from "@react-three/drei";
+import { OrbitControls, Grid, useGLTF, Bounds, useBounds } from "@react-three/drei";
 import type { Stage } from "@/types";
 import { stageColor } from "@/types";
 
@@ -18,9 +18,20 @@ class ModelErrorBoundary extends Component<
   }
 }
 
+function AutoFit() {
+  const bounds = useBounds();
+  useEffect(() => { bounds.refresh().clip().fit(); }, [bounds]);
+  return null;
+}
+
 function GltfModel({ url }: { url: string }) {
   const { scene } = useGLTF(url);
-  return <primitive object={scene} />;
+  return (
+    <Bounds fit clip observe margin={1.4}>
+      <primitive object={scene} />
+      <AutoFit />
+    </Bounds>
+  );
 }
 
 function PlaceholderBuilding({ stages }: { stages: Stage[] }) {
@@ -90,9 +101,9 @@ export function ModelViewer({ stages, modelUrl, selectedStageId }: Props) {
         </Suspense>
 
         <OrbitControls
-          enablePan={false}
-          minDistance={3}
-          maxDistance={40}
+          enablePan={true}
+          minDistance={1}
+          maxDistance={2000}
           maxPolarAngle={Math.PI / 2.2}
         />
       </Canvas>
