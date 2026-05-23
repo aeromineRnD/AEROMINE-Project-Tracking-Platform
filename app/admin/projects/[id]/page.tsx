@@ -499,12 +499,6 @@ export default function AdminProjectDetailPage() {
                     </div>
                   )
                 )}
-                <button
-                  onClick={() => { setPhaseName(`Phase ${phases.length + 1}`); /* scroll to form */ }}
-                  className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-aeromine-400 hover:text-aeromine-600 transition-all"
-                >
-                  + Add phase
-                </button>
               </div>
             </div>
             {selectedPhase && (
