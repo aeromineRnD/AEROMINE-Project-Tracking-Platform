@@ -249,15 +249,12 @@ export default function AdminProjectDetailPage() {
     if (!confirm(t("deletePhaseConfirm"))) return;
     const res = await fetch(`/api/projects/${id}/phases/${phaseId}`, { method: "DELETE" });
     if (res.ok) {
-      setProject((prev) => {
-        if (!prev) return prev;
-        const remaining = (prev.phases ?? []).filter((p) => p.id !== phaseId);
-        return { ...prev, phases: remaining };
-      });
+      const remaining = (project?.phases ?? []).filter((p) => p.id !== phaseId);
+      setProject((prev) => prev ? { ...prev, phases: remaining } : prev);
       if (selectedPhase?.id === phaseId) {
-        const remaining = (project?.phases ?? []).filter((p) => p.id !== phaseId);
         setSelectedPhase(remaining.length > 0 ? remaining[remaining.length - 1] : null);
       }
+      setPhaseName(`Phase ${remaining.length + 1}`);
       mutate();
     }
   }
@@ -295,7 +292,7 @@ export default function AdminProjectDetailPage() {
       );
       setSelectedPhase(newPhase);
       mutate();
-      setPhaseName(`Phase ${((project?.phases ?? []).length) + 2}`);
+      setPhaseName(`Phase ${((project?.phases ?? []).length) + 2}`); // +2: +1 for the one just added, +1 for the next
       setPhaseCapturedAt(new Date().toISOString().split("T")[0]);
       setPhaseModelPath("");
       setPhasePhotos([]);
