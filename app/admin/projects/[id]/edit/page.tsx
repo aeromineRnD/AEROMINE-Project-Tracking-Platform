@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ArrowLeft, Search, UserPlus, X, ImageIcon, ChevronUp, ChevronDown, Trash2, Plus } from "lucide-react";
 import { useT } from "@/lib/i18n/LanguageContext";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { uploadFile } from "@/lib/uploadFile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProject } from "@/lib/hooks/useProjects";
@@ -58,14 +59,10 @@ export default function EditProjectPage() {
     if (!file) return;
     setCoverPreview(URL.createObjectURL(file));
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("category", "covers");
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    if (res.ok) {
-      const { url } = await res.json();
+    try {
+      const url = await uploadFile(file, "covers");
       setCoverUrl(url);
-    } else {
+    } catch {
       setCoverPreview(coverUrl || null);
     }
     setUploading(false);

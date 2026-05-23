@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronRight, X, FileText, Download, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Stage, StageMaterial } from "@/types";
+import { uploadFile } from "@/lib/uploadFile";
 
 const UNITS = ["m³", "kg", "t", "m²", "m", "pcs", "hrs", "L", "boxes"];
 
@@ -37,14 +38,14 @@ export function StageMaterialsCard({ stages, projectId, readOnly = false, onUpda
 
   async function uploadInvoice(file: File): Promise<string | null> {
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("category", "invoices");
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    setUploading(false);
-    if (!res.ok) return null;
-    const { url } = await res.json();
-    return url;
+    try {
+      const url = await uploadFile(file, "invoices");
+      setUploading(false);
+      return url;
+    } catch {
+      setUploading(false);
+      return null;
+    }
   }
 
   async function saveMaterials(stageId: string, materials: StageMaterial[]): Promise<boolean> {

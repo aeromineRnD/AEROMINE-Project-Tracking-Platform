@@ -20,6 +20,7 @@ import { ProjectMessageThread } from "@/components/messaging/ProjectMessageThrea
 import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
+import { uploadFile } from "@/lib/uploadFile";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -94,13 +95,11 @@ export default function AdminProjectDetailPage() {
     if (!files?.length) return;
     setUploadingPhasePhoto(true);
     for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("category", "phases");
-      const res = await fetch("/api/uploads", { method: "POST", body: fd });
-      if (res.ok) {
-        const { url } = await res.json();
+      try {
+        const url = await uploadFile(file, "phases");
         setter((prev) => [...prev, url]);
+      } catch {
+        // skip failed file
       }
     }
     if (inputRef.current) inputRef.current.value = "";
@@ -143,13 +142,11 @@ export default function AdminProjectDetailPage() {
     if (!files.length) return;
     setUploading(true);
     for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("category", "updates");
-      const res = await fetch("/api/uploads", { method: "POST", body: fd });
-      if (res.ok) {
-        const { url } = await res.json();
+      try {
+        const url = await uploadFile(file, "updates");
         setAttachments((prev) => [...prev, { name: file.name, url, type: file.type }]);
+      } catch {
+        // skip failed file
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
