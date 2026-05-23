@@ -21,6 +21,7 @@ import { useProject } from "@/lib/hooks/useProjects";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import { calcOverallProgress, STATUS_LABELS, type Project, type Phase, type Stage, type ProjectUpdate } from "@/types";
 import { uploadFile } from "@/lib/uploadFile";
+import { DatePicker } from "@/components/ui/DatePicker";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -384,12 +385,10 @@ export default function AdminProjectDetailPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">{t("captureDate")}</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={phaseCapturedAt}
-                    onChange={(e) => setPhaseCapturedAt(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                    onChange={(v) => setPhaseCapturedAt(v ?? "")}
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -448,12 +447,9 @@ export default function AdminProjectDetailPage() {
                         required
                         className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs w-24 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
                       />
-                      <input
-                        type="date"
+                      <DatePicker
                         value={editPhaseDate}
-                        onChange={(e) => setEditPhaseDate(e.target.value)}
-                        required
-                        className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                        onChange={(v) => setEditPhaseDate(v ?? "")}
                       />
                       <input
                         value={editPhaseModel}
@@ -570,12 +566,9 @@ export default function AdminProjectDetailPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">{t("captureDate")}</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={phaseCapturedAt}
-                  onChange={(e) => setPhaseCapturedAt(e.target.value)}
-                  required
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                  onChange={(v) => setPhaseCapturedAt(v ?? "")}
                 />
               </div>
               <div className="flex-1 min-w-[200px]">
@@ -795,12 +788,10 @@ export default function AdminProjectDetailPage() {
                     onChange={(e) => setMsTitle(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
                   />
-                  <input
-                    type="date"
-                    required
+                  <DatePicker
                     value={msDueDate}
-                    onChange={(e) => setMsDueDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 bg-white"
+                    onChange={(v) => setMsDueDate(v ?? "")}
+                    className="w-full"
                   />
                   {/* Stage link — auto-completes milestone when stage hits 100% */}
                   <select
