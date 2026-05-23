@@ -115,10 +115,10 @@ export default function ClientProjectDetailPage() {
               )}
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
-                {format(new Date(project.startDate), "dd/MM/yyyy")}
+                {format(new Date(project.startDate), "MMM d, yyyy")}
               </span>
               <span className="text-slate-400">
-                Est. {format(new Date(project.estimatedEnd), "dd/MM/yyyy")}
+                Est. {format(new Date(project.estimatedEnd), "MMM d, yyyy")}
               </span>
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function ClientProjectDetailPage() {
                 </div>
                 {selectedPhase && (
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {t("droneCapture", { date: format(new Date(selectedPhase.capturedAt), "dd/MM/yyyy") })}
+                    {t("droneCapture", { date: format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy") })}
                   </p>
                 )}
               </CardHeader>
@@ -281,8 +281,8 @@ export default function ClientProjectDetailPage() {
               </div>
               <AnimatedProgress value={overallProgress} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>{t("started", { date: format(new Date(project.startDate), "dd/MM/yyyy") })}</span>
-                <span>{t("target", { date: format(new Date(project.estimatedEnd), "dd/MM/yyyy") })}</span>
+                <span>{t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+                <span>{t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
               </div>
             </CardContent>
           </Card>

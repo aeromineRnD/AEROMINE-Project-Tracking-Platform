@@ -329,8 +329,8 @@ export default function AdminProjectDetailPage() {
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
               <span>📍 {project.location}</span>
-              <span>📅 {t("started", { date: format(new Date(project.startDate), "dd/MM/yyyy") })}</span>
-              <span>🎯 {t("target", { date: format(new Date(project.estimatedEnd), "dd/MM/yyyy") })}</span>
+              <span>📅 {t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+              <span>🎯 {t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
             </div>
           </div>
         </div>
@@ -509,7 +509,7 @@ export default function AdminProjectDetailPage() {
             </div>
             {selectedPhase && (
               <p className="text-xs text-slate-400 mt-0.5">
-                Drone capture: {format(new Date(selectedPhase.capturedAt), "dd/MM/yyyy")}
+                Drone capture: {format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy")}
               </p>
             )}
           </CardHeader>
@@ -643,8 +643,8 @@ export default function AdminProjectDetailPage() {
               </div>
               <AnimatedProgress value={overall} className="h-3" />
               <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>{t("started", { date: format(new Date(project.startDate), "dd/MM/yyyy") })}</span>
-                <span>{t("target", { date: format(new Date(project.estimatedEnd), "dd/MM/yyyy") })}</span>
+                <span>{t("started", { date: format(new Date(project.startDate), "MMM d, yyyy") })}</span>
+                <span>{t("target", { date: format(new Date(project.estimatedEnd), "MMM d, yyyy") })}</span>
               </div>
             </CardContent>
           </Card>

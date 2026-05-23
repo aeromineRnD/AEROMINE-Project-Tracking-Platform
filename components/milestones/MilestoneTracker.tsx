@@ -51,8 +51,8 @@ export function MilestoneTracker({ milestones, onToggle }: Props) {
               <div className="flex items-center gap-1 text-[11px] text-slate-400">
                 <Clock className="h-3 w-3" />
                 {m.completed && m.completedAt
-                  ? t("completedOn", { date: format(new Date(m.completedAt), "dd/MM/yyyy") })
-                  : t("due", { date: format(new Date(m.dueDate), "dd/MM/yyyy") })}
+                  ? t("completedOn", { date: format(new Date(m.completedAt), "MMM d, yyyy") })
+                  : t("due", { date: format(new Date(m.dueDate), "MMM d, yyyy") })}
               </div>
 
               {m.stage && (
