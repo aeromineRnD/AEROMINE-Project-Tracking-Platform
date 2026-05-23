@@ -191,7 +191,6 @@ export default function ClientProjectDetailPage() {
                         }`}
                       >
                         {phase.name}
-                        <span className="ml-1.5 font-normal opacity-75">{phase.overallProgress}%</span>
                       </button>
                     ))}
                   </div>
