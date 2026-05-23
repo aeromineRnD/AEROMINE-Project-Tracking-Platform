@@ -148,7 +148,7 @@ export function Header() {
             className="flex items-center gap-2 rounded-full pr-1 hover:bg-slate-100 transition-colors pl-0.5 py-0.5"
             aria-label="User menu"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-aeromine-600 text-white text-sm font-semibold">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-aeromine-600 text-slate-900 text-sm font-semibold">
               {name.charAt(0)}
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />

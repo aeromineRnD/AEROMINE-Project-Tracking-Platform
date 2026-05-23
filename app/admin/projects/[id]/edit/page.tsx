@@ -585,7 +585,7 @@ export default function EditProjectPage() {
             <button
               type="submit"
               disabled={!newStageEn.trim() || stageBusy}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-aeromine-600 text-white hover:bg-aeromine-700 disabled:opacity-40 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-aeromine-600 text-slate-900 hover:bg-aeromine-700 disabled:opacity-40 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>

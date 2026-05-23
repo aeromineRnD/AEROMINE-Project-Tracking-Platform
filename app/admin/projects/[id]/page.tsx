@@ -459,7 +459,7 @@ export default function AdminProjectDetailPage() {
                         className="h-6 px-2 flex items-center gap-1 rounded-md border border-slate-200 text-slate-400 hover:text-aeromine-600 hover:border-aeromine-400 disabled:opacity-50 transition-colors text-[10px]">
                         <Camera className="h-3 w-3" />
                       </button>
-                      <button type="submit" disabled={savingPhase} className="h-6 w-6 flex items-center justify-center rounded-md bg-aeromine-600 text-white hover:bg-aeromine-700 disabled:opacity-50">
+                      <button type="submit" disabled={savingPhase} className="h-6 w-6 flex items-center justify-center rounded-md bg-aeromine-600 text-slate-900 hover:bg-aeromine-700 disabled:opacity-50">
                         <Check className="h-3.5 w-3.5" />
                       </button>
                       <button type="button" onClick={() => setEditingPhaseId(null)} className="h-6 w-6 flex items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:text-slate-600">
@@ -472,7 +472,7 @@ export default function AdminProjectDetailPage() {
                         onClick={() => setSelectedPhase(phase)}
                         className={`rounded-l-lg px-3 py-1.5 text-xs font-semibold transition-all border-y border-l ${
                           selectedPhase?.id === phase.id
-                            ? "bg-aeromine-600 text-white border-aeromine-600 shadow-sm"
+                            ? "bg-aeromine-600 text-slate-900 border-aeromine-600 shadow-sm"
                             : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
                         }`}
                       >
@@ -520,7 +520,7 @@ export default function AdminProjectDetailPage() {
                           onClick={() => setViewerMode(mode)}
                           className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
                             viewerMode === mode
-                              ? "bg-aeromine-600 text-white border-aeromine-600"
+                              ? "bg-aeromine-600 text-slate-900 border-aeromine-600"
                               : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
                           }`}
                         >

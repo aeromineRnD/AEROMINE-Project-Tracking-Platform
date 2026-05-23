@@ -59,7 +59,7 @@ export default function AdminProjectsPage() {
             onClick={() => setStatusFilter(s)}
             className={`rounded-full px-4 py-1.5 text-xs font-medium border transition-colors ${
               statusFilter === s
-                ? "bg-aeromine-600 text-white border-aeromine-600"
+                ? "bg-aeromine-600 text-slate-900 border-aeromine-600"
                 : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
             }`}
           >

@@ -21,7 +21,7 @@ export default function ClientSettingsPage() {
         <CardHeader><CardTitle>{t("account")}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-aeromine-600 text-white text-lg font-bold">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-aeromine-600 text-slate-900 text-lg font-bold">
               {name.charAt(0)}
             </div>
             <div>

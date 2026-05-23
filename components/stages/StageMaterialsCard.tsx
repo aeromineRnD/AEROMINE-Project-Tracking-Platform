@@ -96,7 +96,7 @@ export function StageMaterialsCard({ stages, projectId, readOnly = false, onUpda
           {!readOnly && (
             <button
               onClick={() => { setShowForm((v) => !v); setFormStageId(stages[0]?.id ?? ""); }}
-              className="flex items-center gap-1.5 rounded-lg bg-aeromine-600 hover:bg-aeromine-700 text-white px-3 py-1.5 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-aeromine-600 hover:bg-aeromine-700 text-slate-900 px-3 py-1.5 text-xs font-medium transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Material
@@ -190,7 +190,7 @@ export function StageMaterialsCard({ stages, projectId, readOnly = false, onUpda
                   type="button"
                   onClick={addMaterial}
                   disabled={!newDesc.trim() || !newQty.trim() || saving !== null || uploading}
-                  className="rounded-lg bg-aeromine-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-aeromine-700 disabled:opacity-40 transition-colors"
+                  className="rounded-lg bg-aeromine-600 text-slate-900 px-3 py-1.5 text-xs font-medium hover:bg-aeromine-700 disabled:opacity-40 transition-colors"
                 >
                   {saving ? "Saving…" : "Save"}
                 </button>

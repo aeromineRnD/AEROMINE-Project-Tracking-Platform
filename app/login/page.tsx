@@ -47,12 +47,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-9 w-9 rounded-lg bg-aeromine-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
-            <span className="text-2xl font-bold text-slate-900">Aeromine</span>
-            <span className="text-2xl font-light text-aeromine-600">SiteView</span>
+          <div className="flex items-center gap-3 mb-2">
+            <Image src="/logo.png" alt="Aeromine" width={52} height={52} priority className="rounded-xl" />
+            <span className="text-2xl font-light" style={{ color: "#E8B84B" }}>SITEVIEW 360</span>
           </div>
           <p className="text-sm text-slate-500">Construction progress tracking</p>
         </div>
@@ -72,7 +69,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 transition"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E8B84B] transition"
               />
             </div>
 
@@ -88,7 +85,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 transition"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E8B84B] transition"
               />
             </div>
 
@@ -101,7 +98,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-aeromine-600 hover:bg-aeromine-700 disabled:opacity-60 text-white font-medium rounded-lg py-2.5 text-sm transition"
+              className="w-full disabled:opacity-60 font-medium rounded-lg py-2.5 text-sm transition text-slate-900 hover:brightness-95"
+            style={{ backgroundColor: "#E8B84B" }}
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>

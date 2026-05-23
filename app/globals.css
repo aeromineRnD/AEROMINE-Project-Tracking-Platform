@@ -4,7 +4,7 @@
 
 /* react-day-picker — override accent to aeromine-600 */
 @import "react-day-picker/src/style.css";
-.rdp-root { --rdp-accent-color: #1d62ed; --rdp-accent-background-color: #eef6ff; }
+.rdp-root { --rdp-accent-color: #d4a017; --rdp-accent-background-color: #fefce8; }
 
 @layer base {
   :root {
@@ -14,8 +14,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 43.5 80% 46%;
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;

@@ -186,7 +186,7 @@ export default function ClientProjectDetailPage() {
                         onClick={() => setSelectedPhase(phase)}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all border ${
                           selectedPhase?.id === phase.id
-                            ? "bg-aeromine-600 text-white border-aeromine-600 shadow-sm"
+                            ? "bg-aeromine-600 text-slate-900 border-aeromine-600 shadow-sm"
                             : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
                         }`}
                       >
@@ -217,7 +217,7 @@ export default function ClientProjectDetailPage() {
                               onClick={() => setViewerMode(mode)}
                               className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
                                 viewerMode === mode
-                                  ? "bg-aeromine-600 text-white border-aeromine-600"
+                                  ? "bg-aeromine-600 text-slate-900 border-aeromine-600"
                                   : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
                               }`}
                             >

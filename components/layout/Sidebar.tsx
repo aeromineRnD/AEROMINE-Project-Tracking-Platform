@@ -61,7 +61,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-aeromine-600 text-white"
+                  ? "bg-aeromine-600 text-slate-900"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-white"
               )}
             >
@@ -75,7 +75,7 @@ export function Sidebar() {
       {/* User footer */}
       <div className="border-t border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-aeromine-600 text-white text-sm font-semibold flex-shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-aeromine-600 text-slate-900 text-sm font-semibold flex-shrink-0">
             {name.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">

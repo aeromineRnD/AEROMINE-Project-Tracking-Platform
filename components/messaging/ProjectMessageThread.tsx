@@ -117,7 +117,7 @@ export function ProjectMessageThread({
                       <div
                         className={`max-w-[80%] rounded-xl px-3 py-2 text-sm leading-snug ${
                           isMine
-                            ? "bg-aeromine-600 text-white rounded-br-sm"
+                            ? "bg-aeromine-600 text-slate-900 rounded-br-sm"
                             : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm"
                         }`}
                       >
@@ -145,7 +145,7 @@ export function ProjectMessageThread({
               <button
                 onClick={sendMessage}
                 disabled={!text.trim() || sending}
-                className="flex items-center gap-1.5 rounded-lg bg-aeromine-600 hover:bg-aeromine-700 text-white px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-lg bg-aeromine-600 hover:bg-aeromine-700 text-slate-900 px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40"
               >
                 <Send className="h-3.5 w-3.5" />
                 {sending ? t("sending") : t("sendMessage")}
