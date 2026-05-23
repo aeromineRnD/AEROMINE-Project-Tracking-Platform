@@ -257,6 +257,9 @@ export default function EditProjectPage() {
     if (res.ok) {
       setStages((prev) => prev.filter((s) => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 })));
       mutate();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error ?? "Cannot delete this stage.");
     }
   }
 
