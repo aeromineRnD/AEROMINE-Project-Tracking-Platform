@@ -610,14 +610,19 @@ export default function AdminProjectDetailPage() {
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t("updateStageProgress")}</p>
                 {stages.map((s) => (
                   <div key={s.id} className="flex items-center gap-3">
-                    <span className="w-40 truncate text-xs text-slate-600">{s.nameEn}</span>
+                    <span className="w-40 flex-shrink-0 truncate text-xs text-slate-600">{s.nameEn}</span>
+                    <AnimatedProgress value={s.progress} className="flex-1 h-2.5" />
                     <input
-                      type="range" min={0} max={100} step={5}
+                      type="number"
+                      min={0} max={100}
                       value={s.progress}
-                      onChange={(e) => updateStageProgress(s.id, Number(e.target.value))}
-                      className="flex-1 accent-aeromine-600"
+                      onChange={(e) => {
+                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                        updateStageProgress(s.id, v);
+                      }}
+                      className="w-16 rounded-lg border border-slate-200 px-2 py-1 text-sm text-center font-medium focus:outline-none focus:ring-2 focus:ring-aeromine-500"
                     />
-                    <span className="w-10 text-right text-xs font-medium">{s.progress}%</span>
+                    <span className="text-xs text-slate-400">%</span>
                   </div>
                 ))}
               </div>
