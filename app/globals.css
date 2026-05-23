@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* react-day-picker — override accent to aeromine-600 */
+@import "react-day-picker/src/style.css";
+.rdp-root { --rdp-accent-color: #1d62ed; --rdp-accent-background-color: #eef6ff; }
+
 @layer base {
   :root {
     --background: 0 0% 100%;
