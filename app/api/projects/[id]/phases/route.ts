@@ -44,3 +44,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   return NextResponse.json(phase, { status: 201 });
 }
+
+// Bulk reorder — called after a phase is deleted to keep names consecutive.
+// Body: [{ id, name, order }, ...]
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const { error } = await requireProjectEdit(req, params.id);
+  if (error) return error;
+
+  const items: { id: string; name: string; order: number }[] = await req.json();
+
+  await prisma.$transaction(
+    items.map(({ id, name, order }) =>
+      prisma.phase.update({ where: { id }, data: { name, order } })
+    )
+  );
+
+  return NextResponse.json({ ok: true });
+}

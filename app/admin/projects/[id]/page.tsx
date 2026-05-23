@@ -246,7 +246,20 @@ export default function AdminProjectDetailPage() {
     if (!confirm(t("deletePhaseConfirm"))) return;
     const res = await fetch(`/api/projects/${id}/phases/${phaseId}`, { method: "DELETE" });
     if (res.ok) {
-      const remaining = (project?.phases ?? []).filter((p) => p.id !== phaseId);
+      // Renumber remaining phases consecutively (Phase 1, Phase 2, …)
+      const remaining = (project?.phases ?? [])
+        .filter((p) => p.id !== phaseId)
+        .sort((a, b) => a.order - b.order)
+        .map((p, i) => ({ ...p, name: `Phase ${i + 1}`, order: i + 1 }));
+
+      if (remaining.length > 0) {
+        await fetch(`/api/projects/${id}/phases`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(remaining.map(({ id: pid, name, order }) => ({ id: pid, name, order }))),
+        });
+      }
+
       setProject((prev) => prev ? { ...prev, phases: remaining } : prev);
       if (selectedPhase?.id === phaseId) {
         setSelectedPhase(remaining.length > 0 ? remaining[remaining.length - 1] : null);
@@ -259,6 +272,15 @@ export default function AdminProjectDetailPage() {
   async function addPhase(e: React.FormEvent) {
     e.preventDefault();
     if (!phaseName.trim() || !phaseCapturedAt) return;
+
+    const duplicate = (project?.phases ?? []).some(
+      (p) => p.name.trim().toLowerCase() === phaseName.trim().toLowerCase()
+    );
+    if (duplicate) {
+      alert(`"${phaseName.trim()}" already exists. Please use a different name.`);
+      return;
+    }
+
     setAddingPhase(true);
 
     const currentStages = project?.stages ?? [];
