@@ -309,13 +309,13 @@ export default function EditProjectPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t("startDate")}</label>
-                <input type="date" value={form.startDate} onChange={set("startDate")}
+                <input type="date" lang="en-GB" value={form.startDate} onChange={set("startDate")}
                   max={form.estimatedEnd || undefined}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t("estimatedCompletion")}</label>
-                <input type="date" value={form.estimatedEnd} onChange={set("estimatedEnd")}
+                <input type="date" lang="en-GB" value={form.estimatedEnd} onChange={set("estimatedEnd")}
                   min={form.startDate || undefined}
                   className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 ${
                     form.startDate && form.estimatedEnd && form.estimatedEnd <= form.startDate

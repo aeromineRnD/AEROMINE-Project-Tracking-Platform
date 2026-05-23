@@ -140,6 +140,7 @@ export default function NewProjectPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t("startDate")}</label>
                 <input
                   type="date"
+                  lang="en-GB"
                   required
                   value={form.startDate}
                   onChange={set("startDate")}
@@ -151,6 +152,7 @@ export default function NewProjectPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t("estimatedCompletion")}</label>
                 <input
                   type="date"
+                  lang="en-GB"
                   required
                   value={form.estimatedEnd}
                   onChange={set("estimatedEnd")}
