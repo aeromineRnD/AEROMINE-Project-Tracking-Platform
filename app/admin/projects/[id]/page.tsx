@@ -631,12 +631,16 @@ export default function AdminProjectDetailPage() {
                     <span className="w-40 flex-shrink-0 truncate text-xs text-slate-600">{s.nameEn}</span>
                     <AnimatedProgress value={s.progress} className="flex-1 h-2.5" />
                     <input
+                      key={`${s.id}-${s.progress}`}
                       type="number"
                       min={0} max={100}
-                      value={s.progress}
-                      onChange={(e) => {
-                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
-                        updateStageProgress(s.id, v);
+                      defaultValue={s.progress}
+                      onBlur={(e) => {
+                        const v = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                        if (v !== s.progress) updateStageProgress(s.id, v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                       }}
                       className="w-16 rounded-lg border border-slate-200 px-2 py-1 text-sm text-center font-medium focus:outline-none focus:ring-2 focus:ring-aeromine-500"
                     />
