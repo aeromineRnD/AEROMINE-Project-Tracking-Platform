@@ -34,11 +34,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   });
 
-  await notifyProjectClients(
-    params.id,
-    "New 3D model available",
-    `A new drone capture (${name}) has been added to your project. Log in to view it.`
-  );
+  const has3D    = !!modelPath;
+  const notifTitle = has3D ? "New 3D model available" : "New photos available";
+  const notifBody  = has3D
+    ? `A new 3D model (${name}) has been added to your project. Log in to view it.`
+    : `New photos (${name}) have been added to your project. Log in to view them.`;
+
+  await notifyProjectClients(params.id, notifTitle, notifBody);
 
   return NextResponse.json(phase, { status: 201 });
 }
