@@ -79,7 +79,7 @@ export function Header() {
       {/* Logo — visible only on mobile (sidebar hidden) */}
       <div className="flex md:hidden items-center gap-2">
         <Building2 className="h-5 w-5 text-aeromine-600" />
-        <span className="text-sm font-bold text-slate-900">Aeromine <span className="text-aeromine-600 font-light">SiteView</span></span>
+        <span className="text-sm font-bold text-slate-900">Aero<span className="text-aeromine-600 font-light">VIEW OS</span></span>
       </div>
       <div className="hidden md:block" />
 

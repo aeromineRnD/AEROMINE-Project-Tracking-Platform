@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Aeromine SiteView",
+  title: "AeroVIEW OS",
   description: "Construction project tracking platform",
 };
 

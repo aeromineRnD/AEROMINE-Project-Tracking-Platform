@@ -45,8 +45,7 @@ export function Sidebar() {
       <div className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
         <Building2 className="h-6 w-6 text-aeromine-400 flex-shrink-0" />
         <div>
-          <p className="text-sm font-bold text-white leading-tight">Aeromine</p>
-          <p className="text-[10px] text-aeromine-400 uppercase tracking-widest font-medium">SiteView</p>
+          <p className="text-sm font-bold text-white leading-tight">Aero<span className="text-aeromine-400 font-light">VIEW OS</span></p>
         </div>
       </div>
 

@@ -49,7 +49,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Image src="/logo.png" alt="Aeromine" width={52} height={52} priority className="rounded-xl" />
-            <span className="text-2xl font-light" style={{ color: "#E8B84B" }}>SITEVIEW 360</span>
+            <span className="text-2xl font-light" style={{ color: "#E8B84B" }}>AeroVIEW OS</span>
           </div>
           <p className="text-sm text-slate-500">Construction progress tracking</p>
         </div>
@@ -107,7 +107,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
-          Aeromine SiteView &mdash; Powered by Aeromine
+          AeroVIEW OS &mdash; Powered by Aeromine
         </p>
       </div>
     </div>
