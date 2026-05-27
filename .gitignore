@@ -55,3 +55,7 @@ dev.db
 # Internal planning docs — local only
 PRODUCTION_TODO.md
 DEMO_CREDENTIALS.md
+
+# Claude Code context — contains sensitive business info, never commit
+CLAUDE.md
+Context for claude/
