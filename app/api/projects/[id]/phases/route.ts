@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (error) return error;
 
   const body = await req.json();
-  const { name, order, capturedAt, overallProgress, modelPath, photoUrls, stageSnapshot } = body;
+  const { name, order, capturedAt, overallProgress, category, modelPath, photoUrls, stageSnapshot } = body;
 
   const phase = await prisma.phase.create({
     data: {
@@ -28,17 +28,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       order,
       capturedAt: new Date(capturedAt),
       overallProgress: overallProgress ?? 0,
+      category: category === "INTERIOR" ? "INTERIOR" : "EXTERIOR",
       modelPath: modelPath ?? null,
       photoUrls: photoUrls?.length ? JSON.stringify(photoUrls) : null,
       stageSnapshot: JSON.stringify(stageSnapshot),
     },
   });
 
+  const groupLabel = phase.category === "INTERIOR" ? "interior" : "exterior";
   const has3D    = !!modelPath;
   const notifTitle = has3D ? "New 3D model available" : "New photos available";
   const notifBody  = has3D
-    ? `A new 3D model (${name}) has been added to your project. Log in to view it.`
-    : `New photos (${name}) have been added to your project. Log in to view them.`;
+    ? `A new ${groupLabel} 3D model (${name}) has been added to your project. Log in to view it.`
+    : `New ${groupLabel} photos (${name}) have been added to your project. Log in to view them.`;
 
   await notifyProjectClients(params.id, notifTitle, notifBody);
 

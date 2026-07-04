@@ -79,6 +79,7 @@ model Phase {
   order          Int
   capturedAt     DateTime
   overallProgress Int     @default(0)
+  category       String   @default("EXTERIOR")  // EXTERIOR | INTERIOR
   modelPath      String?
   photoUrls      String?  // JSON: ["https://...jpg", ...]
   stageSnapshot  String   // JSON: [{nameEn, nameEl, progress}]

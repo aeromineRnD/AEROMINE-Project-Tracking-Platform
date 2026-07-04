@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle, Building2, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,16 +29,18 @@ export default function ClientProjectDetailPage() {
   const t = useT();
   const { locale } = useLanguage();
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"EXTERIOR" | "INTERIOR">("EXTERIOR");
   const [requested3D, setRequested3D]     = useState(false);
   const [requesting3D, setRequesting3D]   = useState(false);
   const [viewerMode, setViewerMode]       = useState<"photos" | "3d">("photos");
 
   useEffect(() => {
-    if (project) {
-      const phases = project.phases ?? [];
-      if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
-    }
-  }, [project?.id]);
+    if (!project) return;
+    const inGroup = (project.phases ?? [])
+      .filter((p) => (p.category ?? "EXTERIOR") === activeCategory)
+      .sort((a, b) => a.order - b.order);
+    setSelectedPhase(inGroup.length > 0 ? inGroup[inGroup.length - 1] : null);
+  }, [activeCategory, project?.id]);
 
   useEffect(() => {
     if (selectedPhase) {
@@ -63,6 +65,9 @@ export default function ClientProjectDetailPage() {
   }
 
   const phases = project.phases ?? [];
+  const visiblePhases = phases
+    .filter((p) => (p.category ?? "EXTERIOR") === activeCategory)
+    .sort((a, b) => a.order - b.order);
   const updates: ProjectUpdate[] = (project as any).updates ?? [];
   const milestones = (project as any).milestones ?? [];
   const statusInfo = STATUS_LABELS[project.status];
@@ -80,6 +85,26 @@ export default function ClientProjectDetailPage() {
   const overallProgress = liveStages.length
     ? Math.round(liveStages.reduce((s, st) => s + st.progress, 0) / liveStages.length)
     : 0;
+
+  const categoryToggle = (
+    <div className="flex items-center gap-1.5">
+      {(["EXTERIOR", "INTERIOR"] as const).map((cat) => (
+        <button
+          key={cat}
+          type="button"
+          onClick={() => setActiveCategory(cat)}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-all ${
+            activeCategory === cat
+              ? "bg-aeromine-600 text-slate-900 border-aeromine-600 shadow-sm"
+              : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
+          }`}
+        >
+          {cat === "EXTERIOR" ? <Building2 className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+          {cat === "EXTERIOR" ? t("exterior") : t("interior")}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-5">
@@ -175,12 +200,15 @@ export default function ClientProjectDetailPage() {
             </Card>
           ) : (
             <Card className="overflow-hidden">
-              <CardHeader className="pb-3 border-b">
+              <CardHeader className="pb-3 border-b space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
+                  {categoryToggle}
+                </div>
+                {visiblePhases.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-slate-400">{t("viewPhase")}</span>
-                    {phases.map((phase) => (
+                    {visiblePhases.map((phase) => (
                       <button
                         key={phase.id}
                         onClick={() => setSelectedPhase(phase)}
@@ -194,7 +222,7 @@ export default function ClientProjectDetailPage() {
                       </button>
                     ))}
                   </div>
-                </div>
+                )}
                 {selectedPhase && (
                   <p className="text-xs text-slate-400 mt-0.5">
                     {t("droneCapture", { date: format(new Date(selectedPhase.capturedAt), "MMMM d, yyyy") })}
@@ -202,7 +230,12 @@ export default function ClientProjectDetailPage() {
                 )}
               </CardHeader>
               <CardContent className="p-0">
-                {(() => {
+                {visiblePhases.length === 0 ? (
+                  <div className="py-10 flex flex-col items-center text-center gap-2 text-slate-400">
+                    <Box className="h-8 w-8 text-slate-300" />
+                    <p className="text-sm">{t("noPhasesInGroup")}</p>
+                  </div>
+                ) : (() => {
                   const photos: string[] = selectedPhase?.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
                   const hasPhotos = photos.length > 0;
                   const hasModel  = !!selectedPhase?.modelPath;

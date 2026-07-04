@@ -8,13 +8,14 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const { error } = await requireProjectEdit(req, params.id);
   if (error) return error;
 
-  const { name, capturedAt, modelPath, photoUrls } = await req.json();
+  const { name, capturedAt, category, modelPath, photoUrls } = await req.json();
 
   const phase = await prisma.phase.update({
     where: { id: params.phaseId },
     data: {
       ...(name       !== undefined && { name }),
       ...(capturedAt !== undefined && { capturedAt: new Date(capturedAt) }),
+      ...(category   !== undefined && { category: category === "INTERIOR" ? "INTERIOR" : "EXTERIOR" }),
       ...(modelPath  !== undefined && { modelPath: modelPath || null }),
       ...(photoUrls  !== undefined && {
         photoUrls: Array.isArray(photoUrls) && photoUrls.length > 0

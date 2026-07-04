@@ -45,6 +45,7 @@ export interface Phase {
   order: number;
   capturedAt: string;
   overallProgress: number;
+  category: "EXTERIOR" | "INTERIOR";
   modelPath?: string | null;
   photoUrls?: string | null; // JSON string — parse with JSON.parse()
   stageSnapshot: string; // JSON string — parse with JSON.parse()

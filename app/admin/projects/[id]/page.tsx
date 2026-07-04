@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera, Building2, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ export default function AdminProjectDetailPage() {
   const [project, setProject]             = useState<Project | null>(null);
   const [contactEnabled, setContactEnabled] = useState(true);
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"EXTERIOR" | "INTERIOR">("EXTERIOR");
   const [postTitle, setPostTitle]         = useState("");
   const [postContent, setPostContent]     = useState("");
   const [posting, setPosting]             = useState(false);
@@ -76,10 +77,19 @@ export default function AdminProjectDetailPage() {
     if (swrProject && !project) {
       setProject(swrProject);
       setContactEnabled(swrProject.contactEnabled ?? true);
-      const phases = swrProject.phases ?? [];
-      if (phases.length > 0) setSelectedPhase(phases[phases.length - 1]);
     }
   }, [swrProject]);
+
+  // When the active group changes (or the project first loads), select the
+  // latest phase in that group and reset the "next phase" name accordingly.
+  useEffect(() => {
+    if (!project) return;
+    const inGroup = (project.phases ?? [])
+      .filter((p) => (p.category ?? "EXTERIOR") === activeCategory)
+      .sort((a, b) => a.order - b.order);
+    setSelectedPhase(inGroup.length > 0 ? inGroup[inGroup.length - 1] : null);
+    setPhaseName(`Phase ${inGroup.length + 1}`);
+  }, [activeCategory, project?.id]);
 
   useEffect(() => {
     if (selectedPhase) {
@@ -247,25 +257,32 @@ export default function AdminProjectDetailPage() {
     if (!confirm(t("deletePhaseConfirm"))) return;
     const res = await fetch(`/api/projects/${id}/phases/${phaseId}`, { method: "DELETE" });
     if (res.ok) {
-      // Renumber remaining phases consecutively (Phase 1, Phase 2, …)
-      const remaining = (project?.phases ?? [])
-        .filter((p) => p.id !== phaseId)
+      const deleted = (project?.phases ?? []).find((p) => p.id === phaseId);
+      const cat = deleted?.category ?? "EXTERIOR";
+
+      // Renumber the deleted phase's group consecutively (Phase 1, 2, …);
+      // the other group is left untouched.
+      const sameGroup = (project?.phases ?? [])
+        .filter((p) => p.id !== phaseId && (p.category ?? "EXTERIOR") === cat)
         .sort((a, b) => a.order - b.order)
         .map((p, i) => ({ ...p, name: `Phase ${i + 1}`, order: i + 1 }));
+      const otherGroup = (project?.phases ?? [])
+        .filter((p) => p.id !== phaseId && (p.category ?? "EXTERIOR") !== cat);
+      const remaining = [...otherGroup, ...sameGroup];
 
-      if (remaining.length > 0) {
+      if (sameGroup.length > 0) {
         await fetch(`/api/projects/${id}/phases`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(remaining.map(({ id: pid, name, order }) => ({ id: pid, name, order }))),
+          body: JSON.stringify(sameGroup.map(({ id: pid, name, order }) => ({ id: pid, name, order }))),
         });
       }
 
       setProject((prev) => prev ? { ...prev, phases: remaining } : prev);
       if (selectedPhase?.id === phaseId) {
-        setSelectedPhase(remaining.length > 0 ? remaining[remaining.length - 1] : null);
+        setSelectedPhase(sameGroup.length > 0 ? sameGroup[sameGroup.length - 1] : null);
       }
-      setPhaseName(`Phase ${remaining.length + 1}`);
+      setPhaseName(`Phase ${sameGroup.length + 1}`);
       mutate();
     }
   }
@@ -274,7 +291,10 @@ export default function AdminProjectDetailPage() {
     e.preventDefault();
     if (!phaseName.trim() || !phaseCapturedAt) return;
 
-    const duplicate = (project?.phases ?? []).some(
+    const groupPhases = (project?.phases ?? []).filter(
+      (p) => (p.category ?? "EXTERIOR") === activeCategory
+    );
+    const duplicate = groupPhases.some(
       (p) => p.name.trim().toLowerCase() === phaseName.trim().toLowerCase()
     );
     if (duplicate) {
@@ -295,9 +315,10 @@ export default function AdminProjectDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: phaseName.trim(),
-        order: ((project?.phases ?? []).length) + 1,
+        order: groupPhases.length + 1,
         capturedAt: phaseCapturedAt,
         overallProgress,
+        category: activeCategory,
         modelPath: phaseModelPath.trim() || null,
         photoUrls: phasePhotos,
         stageSnapshot,
@@ -312,7 +333,7 @@ export default function AdminProjectDetailPage() {
       );
       setSelectedPhase(newPhase);
       mutate();
-      setPhaseName(`Phase ${((project?.phases ?? []).length) + 2}`); // +2: +1 for the one just added, +1 for the next
+      setPhaseName(`Phase ${groupPhases.length + 2}`); // +2: +1 for the one just added, +1 for the next
       setPhaseCapturedAt(new Date().toISOString().split("T")[0]);
       setPhaseModelPath("");
       setPhasePhotos([]);
@@ -324,10 +345,33 @@ export default function AdminProjectDetailPage() {
 
   const stages: Stage[]         = project.stages ?? [];
   const phases: Phase[]         = project.phases ?? [];
+  const visiblePhases: Phase[]  = phases
+    .filter((p) => (p.category ?? "EXTERIOR") === activeCategory)
+    .sort((a, b) => a.order - b.order);
   const updates: ProjectUpdate[] = (project as any).updates ?? [];
   const milestones               = (project as any).milestones ?? [];
   const overall                  = calcOverallProgress(stages);
   const statusInfo               = STATUS_LABELS[project.status];
+
+  const categoryToggle = (
+    <div className="flex items-center gap-1.5">
+      {(["EXTERIOR", "INTERIOR"] as const).map((cat) => (
+        <button
+          key={cat}
+          type="button"
+          onClick={() => setActiveCategory(cat)}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-all ${
+            activeCategory === cat
+              ? "bg-aeromine-600 text-slate-900 border-aeromine-600 shadow-sm"
+              : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400 hover:text-aeromine-600"
+          }`}
+        >
+          {cat === "EXTERIOR" ? <Building2 className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+          {cat === "EXTERIOR" ? t("exterior") : t("interior")}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -361,13 +405,16 @@ export default function AdminProjectDetailPage() {
         </div>
       </div>
 
-      {/* 3D Viewer — or Add Phase form if no phases yet */}
-      {phases.length === 0 ? (
+      {/* 3D Viewer — or Add Phase form if the active group has no phases yet */}
+      {visiblePhases.length === 0 ? (
         <Card>
-          <CardHeader className="border-b">
-            <div className="flex items-center gap-2">
-              <Box className="h-5 w-5 text-aeromine-400" />
-              <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
+          <CardHeader className="border-b space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <Box className="h-5 w-5 text-aeromine-400" />
+                <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
+              </div>
+              {categoryToggle}
             </div>
           </CardHeader>
           <CardContent className="py-6">
@@ -433,12 +480,14 @@ export default function AdminProjectDetailPage() {
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <CardHeader className="pb-3 border-b">
+          <CardHeader className="pb-3 border-b space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <CardTitle className="text-base">{t("threeConstructionModel")}</CardTitle>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-400">{t("viewPhase")}</span>
-                {phases.map((phase) =>
+              {categoryToggle}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400">{t("viewPhase")}</span>
+              {visiblePhases.map((phase) =>
                   editingPhaseId === phase.id ? (
                     <form key={phase.id} onSubmit={savePhase} className="flex items-center gap-1.5 flex-wrap">
                       <input
@@ -510,7 +559,6 @@ export default function AdminProjectDetailPage() {
                     </div>
                   )
                 )}
-              </div>
             </div>
             {selectedPhase && (
               <p className="text-xs text-slate-400 mt-0.5">
