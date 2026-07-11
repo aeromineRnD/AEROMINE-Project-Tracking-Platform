@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireProjectAccess, requireProjectEdit } from "@/lib/apiAuth";
 import { notifyProjectClients } from "@/lib/notify";
+import { extractPanoeeUrl } from "@/lib/tour";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireProjectAccess(req, params.id);
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (error) return error;
 
   const body = await req.json();
-  const { name, order, capturedAt, overallProgress, category, modelPath, photoUrls, stageSnapshot } = body;
+  const { name, order, capturedAt, overallProgress, category, modelPath, tourUrl, photoUrls, stageSnapshot } = body;
 
   const phase = await prisma.phase.create({
     data: {
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       overallProgress: overallProgress ?? 0,
       category: category === "INTERIOR" ? "INTERIOR" : "EXTERIOR",
       modelPath: modelPath ?? null,
+      tourUrl: extractPanoeeUrl(tourUrl),
       photoUrls: photoUrls?.length ? JSON.stringify(photoUrls) : null,
       stageSnapshot: JSON.stringify(stageSnapshot),
     },

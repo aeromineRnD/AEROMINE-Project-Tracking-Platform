@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle, Building2, LayoutGrid } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Box, CheckCircle, Building2, LayoutGrid, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
+import { TourViewer } from "@/components/viewer/TourViewer";
 import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
 import { ProjectMessageThread } from "@/components/messaging/ProjectMessageThread";
 import { useProject } from "@/lib/hooks/useProjects";
@@ -32,7 +33,7 @@ export default function ClientProjectDetailPage() {
   const [activeCategory, setActiveCategory] = useState<"EXTERIOR" | "INTERIOR">("EXTERIOR");
   const [requested3D, setRequested3D]     = useState(false);
   const [requesting3D, setRequesting3D]   = useState(false);
-  const [viewerMode, setViewerMode]       = useState<"photos" | "3d">("photos");
+  const [viewerMode, setViewerMode]       = useState<"photos" | "3d" | "360">("photos");
 
   useEffect(() => {
     if (!project) return;
@@ -45,7 +46,12 @@ export default function ClientProjectDetailPage() {
   useEffect(() => {
     if (selectedPhase) {
       const photos: string[] = selectedPhase.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
-      setViewerMode(photos.length > 0 ? "photos" : "3d");
+      setViewerMode(
+        photos.length > 0 ? "photos"
+        : selectedPhase.modelPath ? "3d"
+        : selectedPhase.tourUrl ? "360"
+        : "3d"
+      );
     }
   }, [selectedPhase?.id]);
 
@@ -237,28 +243,35 @@ export default function ClientProjectDetailPage() {
                   </div>
                 ) : (() => {
                   const photos: string[] = selectedPhase?.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
-                  const hasPhotos = photos.length > 0;
-                  const hasModel  = !!selectedPhase?.modelPath;
+                  const modes = ([
+                    ["photos", photos.length > 0],
+                    ["3d", !!selectedPhase?.modelPath],
+                    ["360", !!selectedPhase?.tourUrl],
+                  ] as const).filter(([, ok]) => ok).map(([m]) => m);
+                  const mode = modes.includes(viewerMode) ? viewerMode : (modes[0] ?? "3d");
                   return (
                     <>
-                      {hasPhotos && hasModel && (
+                      {modes.length > 1 && (
                         <div className="flex gap-1 px-4 pt-3">
-                          {(["photos", "3d"] as const).map((mode) => (
+                          {modes.map((m) => (
                             <button
-                              key={mode}
-                              onClick={() => setViewerMode(mode)}
-                              className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
-                                viewerMode === mode
+                              key={m}
+                              onClick={() => setViewerMode(m)}
+                              className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
+                                mode === m
                                   ? "bg-aeromine-600 text-slate-900 border-aeromine-600"
                                   : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
                               }`}
                             >
-                              {mode === "photos" ? "Photos" : "3D Model"}
+                              {m === "360" && <Globe className="h-3.5 w-3.5" />}
+                              {m === "photos" ? "Photos" : m === "3d" ? "3D Model" : t("tourWalkthrough")}
                             </button>
                           ))}
                         </div>
                       )}
-                      {hasPhotos && (!hasModel || viewerMode === "photos") ? (
+                      {mode === "360" && selectedPhase?.tourUrl ? (
+                        <TourViewer url={selectedPhase.tourUrl} />
+                      ) : mode === "photos" ? (
                         <PhasePhotoGallery photos={photos} />
                       ) : (
                         <ModelViewer

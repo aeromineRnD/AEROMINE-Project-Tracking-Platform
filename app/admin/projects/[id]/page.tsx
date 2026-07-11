@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera, Building2, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Box, Check, X, Paperclip, FileText, Image as ImageIcon, Video, Camera, Building2, LayoutGrid, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { UpdateFeed } from "@/components/updates/UpdateFeed";
 import { MilestoneTracker } from "@/components/milestones/MilestoneTracker";
 import { ModelViewerClient as ModelViewer } from "@/components/viewer/ModelViewerClient";
 import { PhasePhotoGallery } from "@/components/viewer/PhasePhotoGallery";
+import { TourViewer } from "@/components/viewer/TourViewer";
 import { StageMaterialsCard } from "@/components/stages/StageMaterialsCard";
 import { ProjectMessageThread } from "@/components/messaging/ProjectMessageThread";
 import { useProject } from "@/lib/hooks/useProjects";
@@ -53,6 +54,7 @@ export default function AdminProjectDetailPage() {
   const [phaseName, setPhaseName]         = useState("Phase 1");
   const [phaseCapturedAt, setPhaseCapturedAt] = useState(new Date().toISOString().split("T")[0]);
   const [phaseModelPath, setPhaseModelPath]   = useState("");
+  const [phaseTourUrl, setPhaseTourUrl]       = useState("");
   const [addingPhase, setAddingPhase]         = useState(false);
 
   // Edit phase inline
@@ -60,6 +62,7 @@ export default function AdminProjectDetailPage() {
   const [editPhaseName, setEditPhaseName]   = useState("");
   const [editPhaseDate, setEditPhaseDate]   = useState("");
   const [editPhaseModel, setEditPhaseModel] = useState("");
+  const [editPhaseTour, setEditPhaseTour]   = useState("");
   const [editPhasePhotos, setEditPhasePhotos] = useState<string[]>([]);
   const [savingPhase, setSavingPhase]       = useState(false);
 
@@ -69,8 +72,8 @@ export default function AdminProjectDetailPage() {
   const phasePhotoRef     = useRef<HTMLInputElement>(null);
   const editPhasePhotoRef = useRef<HTMLInputElement>(null);
 
-  // Viewer mode toggle (when phase has both photos and 3D)
-  const [viewerMode, setViewerMode] = useState<"photos" | "3d">("photos");
+  // Viewer mode toggle (photos / 3D model / 360° tour, per selected phase)
+  const [viewerMode, setViewerMode] = useState<"photos" | "3d" | "360">("photos");
 
   // Hydrate local state from SWR on first load
   useEffect(() => {
@@ -94,7 +97,12 @@ export default function AdminProjectDetailPage() {
   useEffect(() => {
     if (selectedPhase) {
       const photos: string[] = selectedPhase.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
-      setViewerMode(photos.length > 0 ? "photos" : "3d");
+      setViewerMode(
+        photos.length > 0 ? "photos"
+        : selectedPhase.modelPath ? "3d"
+        : selectedPhase.tourUrl ? "360"
+        : "3d"
+      );
     }
   }, [selectedPhase?.id]);
 
@@ -223,6 +231,7 @@ export default function AdminProjectDetailPage() {
     setEditPhaseName(phase.name);
     setEditPhaseDate(new Date(phase.capturedAt).toISOString().split("T")[0]);
     setEditPhaseModel(phase.modelPath ?? "");
+    setEditPhaseTour(phase.tourUrl ?? "");
     setEditPhasePhotos(phase.photoUrls ? JSON.parse(phase.photoUrls) : []);
   }
 
@@ -237,6 +246,7 @@ export default function AdminProjectDetailPage() {
         name: editPhaseName.trim(),
         capturedAt: editPhaseDate,
         modelPath: editPhaseModel.trim() || null,
+        tourUrl: editPhaseTour.trim() || null,
         photoUrls: editPhasePhotos,
       }),
     });
@@ -320,6 +330,7 @@ export default function AdminProjectDetailPage() {
         overallProgress,
         category: activeCategory,
         modelPath: phaseModelPath.trim() || null,
+        tourUrl: phaseTourUrl.trim() || null,
         photoUrls: phasePhotos,
         stageSnapshot,
       }),
@@ -336,6 +347,7 @@ export default function AdminProjectDetailPage() {
       setPhaseName(`Phase ${groupPhases.length + 2}`); // +2: +1 for the one just added, +1 for the next
       setPhaseCapturedAt(new Date().toISOString().split("T")[0]);
       setPhaseModelPath("");
+      setPhaseTourUrl("");
       setPhasePhotos([]);
     }
     setAddingPhase(false);
@@ -451,6 +463,17 @@ export default function AdminProjectDetailPage() {
                 />
               </div>
               <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  {t("tourWalkthrough")} <span className="text-slate-400 font-normal">(Panoee)</span>
+                </label>
+                <input
+                  value={phaseTourUrl}
+                  onChange={(e) => setPhaseTourUrl(e.target.value)}
+                  placeholder="https://tour.panoee.net/iframe/…"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Photos</label>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {phasePhotos.map((url, i) => (
@@ -505,6 +528,13 @@ export default function AdminProjectDetailPage() {
                         onChange={(e) => setEditPhaseModel(e.target.value)}
                         placeholder="/models/…/scene.gltf"
                         className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs font-mono w-48 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
+                      />
+                      <input
+                        value={editPhaseTour}
+                        onChange={(e) => setEditPhaseTour(e.target.value)}
+                        placeholder="Panoee 360° link"
+                        title={t("tourWalkthrough")}
+                        className="rounded-lg border border-aeromine-300 px-2 py-1 text-xs font-mono w-40 focus:outline-none focus:ring-2 focus:ring-aeromine-500"
                       />
                       {/* Photo thumbnails */}
                       {editPhasePhotos.map((url, i) => (
@@ -569,29 +599,36 @@ export default function AdminProjectDetailPage() {
           <CardContent className="p-0">
             {(() => {
               const photos: string[] = selectedPhase?.photoUrls ? JSON.parse(selectedPhase.photoUrls) : [];
-              const hasPhotos = photos.length > 0;
-              const hasModel  = !!selectedPhase?.modelPath;
+              const modes = ([
+                ["photos", photos.length > 0],
+                ["3d", !!selectedPhase?.modelPath],
+                ["360", !!selectedPhase?.tourUrl],
+              ] as const).filter(([, ok]) => ok).map(([m]) => m);
+              const mode = modes.includes(viewerMode) ? viewerMode : (modes[0] ?? "3d");
 
               return (
                 <>
-                  {hasPhotos && hasModel && (
+                  {modes.length > 1 && (
                     <div className="flex gap-1 px-4 pt-3">
-                      {(["photos", "3d"] as const).map((mode) => (
+                      {modes.map((m) => (
                         <button
-                          key={mode}
-                          onClick={() => setViewerMode(mode)}
-                          className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
-                            viewerMode === mode
+                          key={m}
+                          onClick={() => setViewerMode(m)}
+                          className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
+                            mode === m
                               ? "bg-aeromine-600 text-slate-900 border-aeromine-600"
                               : "bg-white text-slate-600 border-slate-200 hover:border-aeromine-400"
                           }`}
                         >
-                          {mode === "photos" ? "Photos" : "3D Model"}
+                          {m === "360" && <Globe className="h-3.5 w-3.5" />}
+                          {m === "photos" ? "Photos" : m === "3d" ? "3D Model" : t("tourWalkthrough")}
                         </button>
                       ))}
                     </div>
                   )}
-                  {hasPhotos && (!hasModel || viewerMode === "photos") ? (
+                  {mode === "360" && selectedPhase?.tourUrl ? (
+                    <TourViewer url={selectedPhase.tourUrl} />
+                  ) : mode === "photos" ? (
                     <PhasePhotoGallery photos={photos} />
                   ) : (
                     <ModelViewer stages={stages} modelUrl={selectedPhase?.modelPath ?? null} />
@@ -625,6 +662,15 @@ export default function AdminProjectDetailPage() {
                   value={phaseModelPath}
                   onChange={(e) => setPhaseModelPath(e.target.value)}
                   placeholder="/models/Phase_2/scene.gltf"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-slate-600 mb-1">{t("tourWalkthrough")}</label>
+                <input
+                  value={phaseTourUrl}
+                  onChange={(e) => setPhaseTourUrl(e.target.value)}
+                  placeholder="https://tour.panoee.net/iframe/…"
                   className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-aeromine-500 font-mono"
                 />
               </div>

@@ -47,6 +47,7 @@ export interface Phase {
   overallProgress: number;
   category: "EXTERIOR" | "INTERIOR";
   modelPath?: string | null;
+  tourUrl?: string | null;
   photoUrls?: string | null; // JSON string — parse with JSON.parse()
   stageSnapshot: string; // JSON string — parse with JSON.parse()
   createdAt: string;

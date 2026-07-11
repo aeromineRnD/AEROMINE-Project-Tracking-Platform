@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireProjectEdit } from "@/lib/apiAuth";
+import { extractPanoeeUrl } from "@/lib/tour";
 
 type Ctx = { params: { id: string; phaseId: string } };
 
@@ -8,7 +9,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const { error } = await requireProjectEdit(req, params.id);
   if (error) return error;
 
-  const { name, capturedAt, category, modelPath, photoUrls } = await req.json();
+  const { name, capturedAt, category, modelPath, tourUrl, photoUrls } = await req.json();
 
   const phase = await prisma.phase.update({
     where: { id: params.phaseId },
@@ -17,6 +18,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       ...(capturedAt !== undefined && { capturedAt: new Date(capturedAt) }),
       ...(category   !== undefined && { category: category === "INTERIOR" ? "INTERIOR" : "EXTERIOR" }),
       ...(modelPath  !== undefined && { modelPath: modelPath || null }),
+      ...(tourUrl    !== undefined && { tourUrl: extractPanoeeUrl(tourUrl) }),
       ...(photoUrls  !== undefined && {
         photoUrls: Array.isArray(photoUrls) && photoUrls.length > 0
           ? JSON.stringify(photoUrls)

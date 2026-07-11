@@ -81,6 +81,7 @@ model Phase {
   overallProgress Int     @default(0)
   category       String   @default("EXTERIOR")  // EXTERIOR | INTERIOR
   modelPath      String?
+  tourUrl        String?  // Panoee 360° virtual tour embed src
   photoUrls      String?  // JSON: ["https://...jpg", ...]
   stageSnapshot  String   // JSON: [{nameEn, nameEl, progress}]
   createdAt      DateTime @default(now())
