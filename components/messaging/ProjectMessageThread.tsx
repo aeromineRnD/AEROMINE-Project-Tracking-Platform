@@ -35,7 +35,7 @@ export function ProjectMessageThread({
   const [text, setText]       = useState("");
   const [sending, setSending] = useState(false);
   const [toggling, setToggling] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const { data: messages, mutate } = useSWR<ProjectMessage[]>(
     contactEnabled || isAdmin ? `/api/projects/${projectId}/messages` : null,
@@ -44,7 +44,8 @@ export function ProjectMessageThread({
   );
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   async function toggleContact() {
@@ -106,7 +107,7 @@ export function ProjectMessageThread({
         {(contactEnabled || isAdmin) && (
           <>
             {/* Message history */}
-            <div className="rounded-lg border border-slate-100 bg-slate-50 max-h-72 overflow-y-auto p-3 space-y-2.5">
+            <div ref={listRef} className="rounded-lg border border-slate-100 bg-slate-50 max-h-72 overflow-y-auto p-3 space-y-2.5">
               {!messages || messages.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-4">{t("noMessagesYet")}</p>
               ) : (
@@ -130,7 +131,6 @@ export function ProjectMessageThread({
                   );
                 })
               )}
-              <div ref={bottomRef} />
             </div>
 
             {/* Input */}
