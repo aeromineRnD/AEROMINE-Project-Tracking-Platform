@@ -15,9 +15,11 @@ progress, and media updates. No more phone calls, WhatsApp photos, or site visit
 
 <img src="docs/Dashboard.png" alt="AeroVIEW OS admin dashboard" width="100%" />
 
-**Watch it in action:** [Full product walkthrough (90s)](docs/Login_Quick_preview.webm) · [Creating a project (44s)](docs/ProjectCreation.webm) · [Clients, updates & settings (35s)](docs/Clients_Updates_settings.webm)
+<br />
 
-_(Click a link to play the video on GitHub.)_
+**Live 3D drone models & 360° tours, right in the browser:**
+
+<img src="docs/demo_3d.gif" alt="Exploring a 3D drone model and 360 tour in AeroVIEW OS" width="100%" />
 
 </div>
 
@@ -115,7 +117,7 @@ the phone in your pocket on-site.
 2. Update stage progress, log materials and invoices, and post media-rich updates as work advances.
 3. Upload each drone capture as a phase — 3D model, photos, and/or a 360° tour.
 
-[Watch: creating a project (44s)](docs/ProjectCreation.webm) · [Watch: managing clients, updates & settings (35s)](docs/Clients_Updates_settings.webm)
+![Creating a project and assigning a client in AeroVIEW OS](docs/demo_project.gif)
 
 **For the client**
 
