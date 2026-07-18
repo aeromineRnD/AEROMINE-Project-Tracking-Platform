@@ -59,3 +59,6 @@ DEMO_CREDENTIALS.md
 # Claude Code context — contains sensitive business info, never commit
 CLAUDE.md
 Context for claude/
+.claude/
+memory/
+*.local
